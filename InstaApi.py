@@ -7,7 +7,7 @@ url = "https://instagram-scraper-api2.p.rapidapi.com/v1/likes"
 querystring = {"code_or_id_or_url": "CxYQJO8xuC6"}
 
 headers = {
-	"x-rapidapi-key": "give your api key",
+	"x-rapidapi-key": "e068aa06e7mshc2bff1b65d8cf33p1f4bf1jsnd9eef98a8f4f",
 	"x-rapidapi-host": "instagram-scraper-api2.p.rapidapi.com"
 }
 
