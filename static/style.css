@@ -1,4 +1,4 @@
-/* General reset */
+/* General Reset */
 * {
     margin: 0;
     padding: 0;
@@ -6,111 +6,94 @@
 }
 
 body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #0a0a0a;
-    color: #fff;
-    overflow-x: hidden;
+    font-family: Arial, sans-serif;
+    color: #f20b0b;
+    line-height: 1.6;
+    background: linear-gradient(135deg, #001f3f, #000000);
 }
 
 header {
-    padding: 20px 80px;
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    background-color: #0a0a0a;
-}
-
-nav{
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
+    padding: 10px 20px;
+    box-shadow: 0 2px 5px rgba(213, 213, 213, 0.97);
 }
 
 .nav-links {
-    list-style-type: none;
+    list-style: none;
     display: flex;
-    gap: 80px;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-links li {
+    margin: 0 10px;
 }
 
 .nav-links a {
     text-decoration: none;
-    color: #fff;
-    font-weight: 500;
+    color: #00d49f;
+    font-size: 20px;
+    transition: color 0.3s ease;
 }
 
-.auth-buttons .sign-in,
-.auth-buttons .sign-up {
-    background: none;
-    border: 2px solid #6b63ff;
-    color: #fff;
-    padding: 10px 30px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s, color 0.3s;
+.nav-links a:hover {
+    color: #007bff;
 }
 
-.auth-buttons .sign-up {
-    background-color: #6b63ff;
-    margin-left: 10px;
-    margin-right: 0px;
-}
-
-.auth-buttons .sign-in:hover {
-    background-color: #6b63ff;
-    color: #fff;
-}
-
-.auth-buttons .sign-up:hover {
-    background-color: #5248c9;
-}
 
 .hero {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 100px 50px;
-    background-color: #0a0a0a;
+    justify-content: space-between;
+    padding: 60px 20px;
+    border-radius: 10px;
+    margin: 155px 0;
 }
 
 .hero-content {
-    max-width: 50%;
+   margin-left: 100px;
+   text-align: center;
 }
 
 .hero-content h1 {
-    font-size: 3.5rem;
-    line-height: 1.2;
-    color: #e5e5e5;
+    font-size: 3rem;
+    color: rgb(173, 168, 211);
+    margin-bottom: 20px;
 }
 
 .cta-button {
-    margin-top: 30px;
-    padding: 15px 30px;
-    background-color: #6b63ff;
+    background-color: #007BFF;
+    color: white;
     border: none;
-    border-radius: 5px;
-    color: #fff;
+    padding: 10px 20px;
     font-size: 1.2rem;
+    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s ease;
 }
 
 .cta-button:hover {
-    background-color: #5248c9;
+    background-color: #0056b3;
+}
+
+.hero-illustration {
+    max-width: 40%;
 }
 
 .hero-illustration img {
     width: 100%;
-    max-width: 600px;
+    height: auto;
+    border-radius: 10px;
 }
 
-footer {
-    padding: 20px 0;
+/* footer {
+    padding: 20px;
     text-align: center;
-    background-color: #0a0a0a;
-    color: #aaa;
-    font-size: 0.9rem;
-}
+    margin-top: 40px;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+} */
 
+/* Responsive Design */
 @media (max-width: 768px) {
     .hero {
         flex-direction: column;
@@ -126,11 +109,7 @@ footer {
     }
 
     .cta-button {
-        width: 100%;
-        padding: 15px;
-    }
-
-    nav ul {
-        flex-direction: column;
+        font-size: 1rem;
+        padding: 8px 15px;
     }
 }
