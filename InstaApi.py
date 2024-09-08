@@ -12,8 +12,7 @@ headers = {
 }
 
 response = requests.get(url, headers=headers, params=querystring)
-
-
+print(response.json())
 
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client["SocialSentinel"]

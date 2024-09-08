@@ -1,4 +1,6 @@
 import requests
+import pymongo
+from pymongo import MongoClient
 
 url = "https://all-media-downloader.p.rapidapi.com/download"
 
@@ -12,3 +14,8 @@ headers = {
 response = requests.post(url, data=payload, headers=headers)
 
 print(response.json())
+
+# client = pymongo.MongoClient("mongodb://localhost:27017/")
+# db = client["SocialSentinel"]
+# collection = db["content"]
+# collection.insert_many(response.json())

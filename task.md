@@ -11,5 +11,3 @@
 1. Case Study on Sentiment Analysis based on the what types of data is affecting the sentiments and what are the other values which consider in our api which is help on accurate recomadation system. like in this code postive and negative values are show in output so increse the output parameter and check the output.
 2. Give insights case study on the whatsapp Group.
 3. Design the Website UI using Given Link on Whatsapp Group.
-
-baki code bhi chala ke dekh sakte ho mai apna api key dal raha hu aur is vale task me mai bhi sath me hi kam karunga.
