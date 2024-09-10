@@ -257,6 +257,3 @@ for a, b in popular_tags.iterrows():
 # Visualization
 list_score = popular_tags['Score'].tolist()
 plot(list_name, list_score, "Hashtag Names", "Scores", "Relative scores of Top 10 recommended hashtags", "hashtag.png")
-
-
-

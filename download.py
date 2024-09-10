@@ -1,6 +1,6 @@
 import requests
-import pymongo
-from pymongo import MongoClient
+# import pymongo
+# from pymongo import MongoClient
 
 url = "https://all-media-downloader.p.rapidapi.com/download"
 
