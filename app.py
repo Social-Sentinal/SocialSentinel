@@ -7,9 +7,20 @@ def home():
     return render_template('index.html')
 
 
-@app.route('/hello', methods=['GET'])
+@app.route('/engine', methods=['GET'])
 def test():
-    return render_template('test.html')
+    return render_template('engine.html')
+
+
+@app.route('/sentiments', methods=['GET'])
+def test():
+    return render_template('sentiments.html')
+
+
+@app.route('/reports', methods=['GET'])
+def test():
+    return render_template('reports.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
