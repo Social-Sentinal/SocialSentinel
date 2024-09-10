@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SocialSentinel</title>
+    <title>Recommendations - SocialSentinel</title>
     <link rel="stylesheet" href="/static/style.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
@@ -39,7 +39,7 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto nav-links">
+         <ul class="navbar-nav ms-auto nav-links">
             <li class="nav-item">
               <a class="nav-link" href="/templates/index.html"><i class="material-icons">home</i></a>
             </li>
@@ -57,15 +57,25 @@
       </nav>
     </header>
 
-    <section class="hero">
-      <div class="hero-content">
-        <h1>Your Sentiments<br />Recommendation System</h1>
-        <button class="cta-button">Get Started For Free</button>
-      </div>
-      <div class="hero-illustration">
-        <img src="/static/robo.png" alt="Robot Illustration" />
-      </div>
-    </section>
+    <main class="container my-5">
+      <section class="text-center text-light">
+
+
+        <h1 class="mb-4">Recommendations</h1>
+        <p class="lead mb-4">Get personalized recommendations based on your preferences.</p>
+        
+        <div class="mb-4">
+          <label for="recommendationInput" class="form-label">Enter your preferences</label>
+          <textarea id="recommendationInput" class="form-control" rows="5" placeholder="Type your preferences here..."></textarea>
+          <button id="recommendButton" class="btn btn-primary mt-3">Get Recommendations</button>
+        </div>
+        
+        <div id="recommendationResult" class="mt-4">
+          <!-- Recommendations result will be displayed here -->
+        </div>
+      </section>
+    </main>
+
     <script src="/static/script.js"></script>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
