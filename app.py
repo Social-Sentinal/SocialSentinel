@@ -7,18 +7,18 @@ def home():
     return render_template('index.html')
 
 
-@app.route('/engine', methods=['GET'])
-def test():
+@app.route('/engine.html', methods=['GET'])
+def engine():
     return render_template('engine.html')
 
 
-@app.route('/sentiments', methods=['GET'])
-def test():
+@app.route('/sentiments.html', methods=['GET'])
+def sentiments():
     return render_template('sentiments.html')
 
 
-@app.route('/reports', methods=['GET'])
-def test():
+@app.route('/reports.html', methods=['GET'])
+def reports():
     return render_template('reports.html')
 
 
