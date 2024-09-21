@@ -21,6 +21,5 @@ def sentiments():
 def reports():
     return render_template('reports.html')
 
-
 if __name__ == '__main__':
     app.run(debug=True)
