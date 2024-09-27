@@ -10,7 +10,7 @@ posts_url = "https://instagram-scraper-api2.p.rapidapi.com/v1.2/posts"
 
 # Query parameters and headers for Instagram API
 querystring = {"username_or_id_or_url": "mrbeast"}
-querystring1 = {"hashtag": "summer"}
+# querystring1 = {"hashtag": "summer"}
 
 
 headers = {
@@ -22,7 +22,7 @@ headers = {
 info_res = requests.get(info_url, headers=headers, params=querystring)
 reels_res = requests.get(reels_url, headers=headers, params=querystring)
 posts_res = requests.get(posts_url, headers=headers, params=querystring)
-hashtag_res = requests.get(hashtag_url, headers=headers, params=querystring1)
+hashtag_res = requests.get(hashtag_url, headers=headers, params=querystring)
 
 # Check if the response is successful
 if all(res.status_code == 200 for res in [info_res, reels_res, posts_res, hashtag_res]):

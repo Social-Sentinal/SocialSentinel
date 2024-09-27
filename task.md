@@ -12,7 +12,7 @@
 2. Give insights case study on the whatsapp Group.
 3. Design the Website UI using Given Link on Whatsapp Group.
 
-
+Test No - 003
 <!-- Dataset Atributes -->
 ## USER INFO
 <!-- {
@@ -95,3 +95,15 @@
     "related_hashtags": ["#PetsOfInstagram", "#DogLover"]
   }
 ] -->
+
+Test No - 04
+I can change the approach from top down to bottom up approach.
+Firstly I can retrive the data from the rapid api but in this case i can chage the approach and use it for only recomndation.
+
+
+Test No - 05
+I have multiple datasets but i dont know how to use it challenges complexity and robustness also i donot have any approach.
+then i can prefer cosine simillarity and tfdf.
+
+Test No - 06 
+I can use normal dataset and make content based and collaborative system.
