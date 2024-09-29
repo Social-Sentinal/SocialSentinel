@@ -10,7 +10,7 @@ info = "https://instagram-scraper-api2.p.rapidapi.com/v1/info"
 # post = "https://instagram-scraper-api2.p.rapidapi.com/v1.2/posts"
 # reels = "https://instagram-scraper-api2.p.rapidapi.com/v1.2/reels"
 # stories = "https://instagram-scraper-api2.p.rapidapi.com/v1/stories"
-# hastag = "https://instagram-scraper-api2.p.rapidapi.com/v1/hashtag"
+hastag = "https://instagram-scraper-api2.p.rapidapi.com/v1/hashtag"
 # similar_accounts = "https://instagram-scraper-api2.p.rapidapi.com/v1/similar_accounts"
 # likes = "https://instagram-scraper-api2.p.rapidapi.com/v1/likes"
 # comments = "https://instagram-scraper-api2.p.rapidapi.com/v1/comments"
@@ -39,7 +39,7 @@ info_res = requests.get(info, headers=headers, params=querystring)
 # sim_res = requests.get(similar_accounts,headers=headers,params=querystring)
 
 
-print(info_res.json()['data'])
+print(info_res.json()['data'])['urls']
 # client = pymongo.MongoClient("mongodb://localhost:27017/")
 # db = client["SocialSentinel"]
 # collection = db["reels"]
