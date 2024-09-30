@@ -8,8 +8,20 @@ def home():
 
 
 @app.route('/engine.html', methods=['GET'])
-def engine():
-    return render_template('engine.html')
+def recommend():
+    user_input = request.form['user_input']  # Get user input from the form
+    recommendations = hybrid_recommender.predict(user_input)
+
+    # Extract required fields for query params
+    query_params = {
+        "captions": recommendations['captions'].tolist(),
+        "hashtags": recommendations['hashtags'].tolist()
+    }
+
+    # Fetch real-time URLs
+    urls = fetch_real_time_urls(query_params)
+
+    return render_template('engine.html', recommendations=recommendations, urls=urls)
 
 
 @app.route('/sentiments.html', methods=['GET'])
