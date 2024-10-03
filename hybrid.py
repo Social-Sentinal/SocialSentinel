@@ -29,7 +29,6 @@ class HybridRecommendation:
     def combine_recommendations(self, content, collaborative, sentiment):
         # Logic to combine content and collaborative recommendations
         combined = pd.concat([content, collaborative])
-        combined['score'] = combined['score'] * \
-            sentiment  # Adjust based on sentiment score
-        # Top 10 recommendations
+        # combined['score'] = combined['score'] * \
+        #     sentiment  
         return combined.sort_values(by='score', ascending=False).head(10)

@@ -1,44 +1,95 @@
-from flask import Flask, request, render_template
-import pickle
-from hybrid import HybridRecommendation
+from flask import Flask, request, jsonify, render_template
+import joblib
+import numpy as np
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+
+# Initialize Flask app
 app = Flask(__name__)
 
-# Load your models from .pkl files
-with open('D:\Github\SocialSentinel\model\sentiment_model.pkl', 'rb') as f:
-    sentiment_model = pickle.load(f)
+# Load the model bundle
+model_bundle = joblib.load('D:\Github\SocialSentinel\model\sentments_modal.pkl')
+tfidf = model_bundle['tfidf']
+# scaler = model_bundle['scaler']
+df = model_bundle['df']
 
-with open('D:\Github\SocialSentinel\model\content.pkl', 'rb') as f:
-    content_model = pickle.load(f)
+# NLTK setup for text preprocessing
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
+stemmer = PorterStemmer()
 
-with open('D:\Github\SocialSentinel\model\collaborative_filtering_model.pkl', 'rb') as f:
-    collaborative_model = pickle.load(f)
+# Define the preprocessing function again
 
-# Initialize the hybrid recommender
-hybrid_recommender = HybridRecommendation(
-    sentiment_model, content_model, collaborative_model)
+
+def preprocess_text(text):
+    text = text.lower()  # Lowercase
+    # Remove special characters and numbers
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    tokens = [word for word in text.split() if word not in stop_words]
+    tokens = [stemmer.stem(word) for word in tokens]  # Stemming
+    return ' '.join(tokens)
+
+
+# Combine Caption and Hashtags
+df['content'] = df['Caption'] + ' ' + df['Hashtags']
+
+# Define function for post recommendation
+
+
+def recommend_by_caption(input_caption, num_recommendations=5):
+    input_caption_processed = preprocess_text(input_caption)
+    input_caption_vector = tfidf.transform([input_caption_processed])
+
+    engagement_features = df[['Likes', 'Comments', 'Shares',
+                              'Saves', 'Profile Visits', 'Follows']].values
+    zeros_for_engagement = np.zeros(
+        engagement_features.shape[1]).reshape(1, -1)
+    input_combined_features = np.hstack(
+        [input_caption_vector.toarray(), zeros_for_engagement])
+
+    # Compute cosine similarity
+    combined_features = np.hstack(
+        [tfidf.transform(df['content']).toarray(), engagement_features])
+    similarity_scores = cosine_similarity(
+        input_combined_features, combined_features).flatten()
+
+    similar_posts_indices = similarity_scores.argsort()[
+        ::-1][:num_recommendations]
+    return df.iloc[similar_posts_indices]
+
+# Define route for the homepage
 
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('reports.html')
+
+# Define route for handling recommendations
 
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
-    user_input = request.form['user_input']  # Get user input from the form
-    recommendations = hybrid_recommender.predict(user_input)
+    if request.method == 'POST':
+        input_caption = request.form['caption']
+        num_recommendations = int(request.form.get('num_recommendations', 5))
 
-    # Extract required fields for query params
-    query_params = {
-        "captions": recommendations['captions'].tolist(),
-        "hashtags": recommendations['hashtags'].tolist()
-    }
+        # Get recommendations
+        recommended_posts = recommend_by_caption(
+            input_caption, num_recommendations)
 
-    # Fetch real-time URLs
-    urls = fetch_real_time_urls(query_params)
+        # Select the relevant columns to display
+        selected_columns = ['Date', 'Caption',
+                            'Hashtags', 'Likes', 'Comments', 'Shares']
+        recommended_posts = recommended_posts[selected_columns].to_dict(
+            orient='records')
 
-    return render_template('reports.html', recommendations=recommendations, urls=urls)
+        return jsonify(recommended_posts)
 
 
+# Run the Flask app
 if __name__ == '__main__':
     app.run(debug=True)

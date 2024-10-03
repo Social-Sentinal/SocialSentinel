@@ -10,7 +10,7 @@ posts_url = "https://instagram-scraper-api2.p.rapidapi.com/v1.2/posts"
 
 # Query parameters and headers for Instagram API
 # querystring = {"username_or_id_or_url": "mrbeast"}
-querystring1 = {"hashtag": "summer"}
+querystring = {"hashtag": "summer"}
 
 
 headers = {

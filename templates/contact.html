@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>SocialSentinel</title>
+  <title>SocialSentinel - Reports</title>
   <meta name="description" content="">
   <meta name="keywords" content="">
   <!-- Fonts -->
@@ -40,25 +40,43 @@
 
   <main id="main">
     <section class="container mt-5 pt-5">
-      <h2 class="text-center mb-4">Sentiment Analysis Based Post</h2>
-      
-      <!-- User Input Form -->
-      <form id="sentiment-form" method="POST" action="{{ url_for('analyze_sentiment') }}">
-        <div class="mb-3">
-          <label for="user-input" class="form-label">Enter your text:</label>
-          <textarea class="form-control" id="user-input" name="text" rows="3" required></textarea>
+      <h2 class="text-center mb-4">Sentiment Analysis Reports</h2>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Total Sentiments Analyzed</h5>
+              <p class="card-text">{{ report_data.total_sentiments }}</p>
+            </div>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary">Analyze Sentiment</button>
-      </form>
-
-      <!-- Sentiment Analysis Results -->
-      {% if analysis_result %}
-      <div class="mt-4">
-        <h3>Sentiment Analysis Result</h3>
-        <p><strong>Input Text:</strong> {{ analysis_result.text }}</p>
-        <p><strong>Sentiment:</strong> {{ analysis_result.sentiment }}</p>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Positive Sentiments</h5>
+              <p class="card-text">{{ report_data.positive }}</p>
+            </div>
+          </div>
+        </div>
       </div>
-      {% endif %}
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Negative Sentiments</h5>
+              <p class="card-text">{{ report_data.negative }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Neutral Sentiments</h5>
+              <p class="card-text">{{ report_data.neutral }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <h3 class="text-center mt-5">Recommended Posts Based on Sentiments</h3>
       <div class="row mt-4">
