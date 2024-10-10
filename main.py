@@ -12,7 +12,7 @@ from nltk.stem import PorterStemmer
 app = Flask(__name__)
 
 # Load the model bundle
-model_bundle = joblib.load('D:\Github\SocialSentinel\model\sentments_modal.pkl')
+model_bundle = joblib.load('sentiment_model.pkl')
 tfidf = model_bundle['tfidf']
 # scaler = model_bundle['scaler']
 df = model_bundle['df']
