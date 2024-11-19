@@ -1,3 +1,4 @@
+caption,hashtags,timestamp,interaction_score,input_text,predicted_interaction
 Sunset by the beach! #beachlife #sunset,#beachlife #sunset,2023-09-27 18:45:00,9.199
 Exploring the mountains! #travel #adventure,#travel #adventure,2023-09-28 10:30:00,6.677
 Delicious food! #foodie #yum,#foodie #yum,2023-09-28 12:00:00,8.995
@@ -6,10 +7,20 @@ Delicious food! #foodie #yum,#foodie #yum,2023-09-28 12:00:00,7.693
 Sunset by the beach! #beachlife #sunset,#beachlife #sunset,2023-09-27 18:45:00,12.944
 Exploring the mountains! #travel #adventure,#travel #adventure,2023-09-28 10:30:00,8.947
 Exploring the mountains! #travel #adventure,#travel #adventure,2023-09-28 10:30:00,8.082
-Delicious food! #foodie #yum,#foodie #yum,2023-09-28 12:00:00,8.221Delicious food! #foodie #yum,#foodie #yum,2023-09-28 12:00:00,6.809
 Exploring the mountains! #travel #adventure,#travel #adventure,2023-09-28 10:30:00,6.896
 Sunset by the beach! #beachlife #sunset,#beachlife,2024-09-30 22:33:01,7.048
 Sunset by the beach! #beachlife #sunset,#beachlife #sunset,2023-09-27 18:45:00,10.537
 Exploring the mountains! #travel #adventure,#travel #adventure,2023-09-28 10:30:00,7.61
 Delicious food! #foodie #yum,#nightlife,2024-10-02 17:55:53,7.249
 Morning coffee vibes! #coffee #morning,#nature,2024-09-30 18:06:43,6.591
+Sunset by the beach! #beachlife #sunset,#nature,2024-10-04 16:39:30,7.065
+Enjoying the city lights! #cityscape #nightlife,#nature,2024-10-12 04:39:03,7.233
+Waking up to a beautiful view! #view #morning,#sunset,2024-10-15 02:47:24,7.263
+Exploring new cultures! #culture #travel,#culture,2024-10-10 14:05:41,7.194
+Sunset by the beach! #beachlife #sunset,#explore,2024-10-14 16:05:41,7.221
+Enjoying the city lights! #cityscape #nightlife,#beachlife,2024-10-09 06:05:41,10.956
+Peaceful lakeside moments! #lakeview #serenity,#cityscape,2024-10-16 00:05:41,6.635
+Enjoying the city lights! #cityscape #nightlife,#hiking,2024-10-16 14:05:41,6.918
+Peaceful lakeside moments! #lakeview #serenity,#travel,2024-10-15 14:05:41,8.689
+Peaceful lakeside moments! #lakeview #serenity,#travel,2024-10-15 14:05:41,6.631
+Sunset by the beach! #beachlife #sunset,#coffee,2024-10-14 23:14:06,6.782

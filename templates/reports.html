@@ -4,11 +4,7 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>SocialSentinel</title>
-  <meta name="description" content="">
-  <meta name="keywords" content="">
   <!-- Fonts -->
-  <link href="https://fonts.googleapis.com" rel="preconnect">
-  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
   <!-- Vendor CSS Files -->
@@ -18,19 +14,24 @@
 </head>
 <body class="index-page">
   <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid container-xl position-relative d-flex align-items-center">
+    <div class="container-fluid container-xl d-flex align-items-center">
       <a href="index.html" class="logo d-flex align-items-center me-auto">
         <img src="static/img/logo.png" alt="Logo">
         <h1 class="sitename">SocialSentinel</h1>
       </a>
-
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="sentiments.html">Sentiments</a></li>
+          <li><a href="/">Home</a></li>
+         
+          <li class="dropdown"><a href="contact.html"><span>Model</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+          </li>
+          <li><a href="sentiments.html">Sentiments Analysis</a></li>
+          <li><a href="contact.html">Content Recommandtions</a></li>
+          <li><a href="reports.html" class="active">Collaborative Recommandtions</a></li>
+        </ul>
           <li><a href="engine.html">Engine</a></li>
-          <li><a href="reports.html" class="active">Report</a></li>
-          <li><a href="contact.html">Contact</a></li>
+          <li><a href="api.html">API</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
@@ -38,43 +39,26 @@
     </div>
   </header>
 
-  <main id="main">
-    <section class="container mt-5 pt-5">
-      <h2 class="text-center mb-4">Sentiment Analysis Based Post</h2>
-      
-      <!-- User Input Form -->
-      <form id="sentiment-form" method="POST" action="{{ url_for('analyze_sentiment') }}">
-        <div class="mb-3">
-          <label for="user-input" class="form-label">Enter your text:</label>
-          <textarea class="form-control" id="user-input" name="text" rows="3" required></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Analyze Sentiment</button>
-      </form>
-
-      <!-- Sentiment Analysis Results -->
-      {% if analysis_result %}
-      <div class="mt-4">
-        <h3>Sentiment Analysis Result</h3>
-        <p><strong>Input Text:</strong> {{ analysis_result.text }}</p>
-        <p><strong>Sentiment:</strong> {{ analysis_result.sentiment }}</p>
-      </div>
-      {% endif %}
-
-      <h3 class="text-center mt-5">Recommended Posts Based on Sentiments</h3>
-      <div class="row mt-4">
-        {% for post in recommended_posts %}
-        <div class="col-md-4">
-          <div class="card mb-3">
+  <main id="main" class="mt-5 pt-5">
+    <section class="container">
+     <!-- Recommended Posts Section -->
+<h3 class="text-center mt-5">Recommended Posts Based on Predictions</h3>
+<div class="row mt-4">
+    {% for post in recommended_posts %}
+    <div class="col-md-4">
+        <div class="card mb-3">
             <img src="{{ post.image_url }}" class="card-img-top" alt="Post Image">
             <div class="card-body">
-              <h5 class="card-title">{{ post.caption }}</h5>
-              <p class="card-text">{{ post.hashtags }}</p>
-              <p class="card-text"><small class="text-muted">{{ post.timestamp }}</small></p>
+                <h5 class="card-title">{{ post.caption }}</h5>
+                <p class="card-text">{{ post.hashtags }}</p>
+                <p class="card-text"><small class="text-muted">{{ post.timestamp }}</small></p>
             </div>
-          </div>
         </div>
-        {% endfor %}
-      </div>
+    </div>
+    {% endfor %}
+</div>
+
+
     </section>
   </main>
 
@@ -84,7 +68,6 @@
 
   <!-- Vendor JS Files -->
   <script src="static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="static/vendor/php-email-form/validate.js"></script>
   <script src="static/js/main.js"></script>
 </body>
 </html>

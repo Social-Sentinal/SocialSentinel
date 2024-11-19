@@ -4,33 +4,73 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>SocialSentinel</title>
-  <meta name="description" content="">
-  <meta name="keywords" content="">
+
   <!-- Fonts -->
-  <link href="https://fonts.googleapis.com" rel="preconnect">
-  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
   <!-- Vendor CSS Files -->
   <link href="static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link href="static/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
   <link href="static/css/main.css" rel="stylesheet">
+
+  <!-- Chart.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    body {
+      background-color: #f8f9fa;
+      color: #343a40;
+    }
+    h2, h4 {
+      margin-bottom: 20px;
+    }
+    #result {
+      background-color: #e9ecef;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      margin-bottom: 30px;
+    }
+    .text-success {
+      color: #4caf50; 
+    }
+    .text-warning {
+      color: #00002E;
+    }
+    .text-danger {
+      color: #f44336; 
+    }
+    .navbar {
+      background-color: #FFFFFF; 
+    }
+  </style>
 </head>
+
 <body class="index-page">
-  <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid container-xl position-relative d-flex align-items-center">
+  <header class="header d-flex align-items-center fixed-top navbar">
+    <div class="container-fluid container-xl d-flex align-items-center">
       <a href="index.html" class="logo d-flex align-items-center me-auto">
         <img src="static/img/logo.png" alt="Logo">
         <h1 class="sitename">SocialSentinel</h1>
       </a>
-
-      <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="sentiments.html" class="active">Sentiments</a></li>
+      <nav class="navmenu">
+         <ul>
+          <li><a href="/">Home</a></li>
+         
+          <li class="dropdown"><a href="contact.html"><span>Model</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+          </li>
+          <li><a href="sentiments.html" class="active" >Sentiments Analysis</a></li>
+          <li><a href="contact.html">Content Recommandtions</a></li>
+          <li><a href="reports.html">Collaborative Recommandtions</a></li>
+        </ul>
           <li><a href="engine.html">Engine</a></li>
-          <li><a href="reports.html">Report</a></li>
-          <li><a href="contact.html">Contact</a></li>
+          <li><a href="api.html">API</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
@@ -41,6 +81,8 @@
   <main id="main">
     <section class="container mt-5 pt-5">
       <h2 class="text-center mb-4">Sentiment Analysis</h2>
+
+      <!-- Input Form -->
       <form id="sentimentForm">
         <div class="mb-3">
           <label for="textInput" class="form-label">Enter your text:</label>
@@ -48,7 +90,22 @@
         </div>
         <button type="submit" class="btn btn-primary">Analyze Sentiment</button>
       </form>
+
+      <!-- Result Display -->
       <div id="result" class="mt-4"></div>
+
+      <!-- Additional Features Section -->
+      <div id="extra-features" class="mt-5">
+        <h4>Sentiment Distribution</h4>
+        <div class="chart-container">
+          <canvas id="sentimentChart"></canvas>
+        </div>
+
+        <h4>Emotion Intensity</h4>
+        <div class="chart-container">
+          <canvas id="emotionChart"></canvas>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -58,14 +115,11 @@
 
   <!-- Vendor JS Files -->
   <script src="static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="static/vendor/php-email-form/validate.js"></script>
   <script src="static/js/main.js"></script>
 
   <script>
-    // Handle form submission
     document.getElementById('sentimentForm').addEventListener('submit', function(event) {
-      event.preventDefault(); // Prevent the default form submission
-
+      event.preventDefault();
       const userInput = document.getElementById('textInput').value;
 
       fetch('/predict', {
@@ -78,7 +132,54 @@
       .then(response => response.json())
       .then(data => {
         const resultDiv = document.getElementById('result');
-        resultDiv.innerHTML = `<h5>Text: "${data.text}"</h5><p>Sentiment: ${data.sentiment}</p>`;
+        resultDiv.innerHTML = `
+          <h5>Text: "<span class="${data.sentiment === 'Positive' ? 'text-success' : data.sentiment === 'Neutral' ? 'text-warning' : 'text-danger'}">${data.text}</span>"</h5>
+          <p>Sentiment: <span class="${data.sentiment === 'Positive' ? 'text-success' : data.sentiment === 'Neutral' ? 'text-warning' : 'text-danger'}">${data.sentiment}</span></p>
+          <p>Confidence: <span class="${data.sentiment === 'Positive' ? 'text-success' : data.sentiment === 'Neutral' ? 'text-warning' : 'text-danger'}">${(data.confidence * 100).toFixed(2)}%</span></p>
+        `;
+
+        const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+        new Chart(sentimentCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Positive', 'Neutral', 'Negative'],
+            datasets: [{
+              data: [data.distribution.positive, data.distribution.neutral, data.distribution.negative],
+              backgroundColor: ['#4caf50', '#ffeb3b', '#f44336'],
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+          },
+        });
+
+        fetch('/emotion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ 'text': userInput }),
+        })
+        .then(response => response.json())
+        .then(emotionData => {
+          const emotionCtx = document.getElementById('emotionChart').getContext('2d');
+          new Chart(emotionCtx, {
+            type: 'bar',
+            data: {
+              labels: Object.keys(emotionData.emotions),
+              datasets: [{
+                label: 'Emotion Intensity',
+                data: Object.values(emotionData.emotions),
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+              }],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+            },
+          });
+        });
       })
       .catch(error => console.error('Error:', error));
     });

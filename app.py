@@ -1,23 +1,32 @@
 from flask import request, jsonify, Flask, render_template
 import random
 import csv
-from post_generator import generate_posts  # Ensure this file generates random posts
 import pickle
 import pandas as pd
 import re
+from post_generator import generate_posts
+from senti import predict_sentiment, generate_word_cloud, emotion_detection
+from collab import load_model_and_vectorizer, analyze_csv_data, get_random_images
+from content import recommend_posts, load_data, train_word2vec, get_avg_word2vec
+import api_logic
 
 app = Flask(__name__)
 
 # Generate random posts (20 posts)
 posts = generate_posts(20)
 
+
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html')
 
+## Engine Page ##
+
+
 @app.route('/engine.html', methods=['GET'])
 def admin():
     return render_template('engine.html')
+
 
 @app.route('/get_posts', methods=['GET'])
 def get_posts():
@@ -35,27 +44,46 @@ def save_post():
                          post_data['timestamp'], post_data['duration']])
     return jsonify({"message": "Post and duration saved successfully!"})
 
+
 @app.route('/engine.html', methods=['GET', 'POST'])
 def recommend():
     if request.method == 'POST':
         user_input = request.form['user_input']  # Get user input from the form
-        recommendations = hybrid_recommender.predict(user_input)  # Ensure this is defined
-        
-        # Extract required fields for query params
-        query_params = {
-            "captions": recommendations['captions'].tolist(),
-            "hashtags": recommendations['hashtags'].tolist()
-        }
+        recommendations = recommend_posts(
+            user_input)  # Make sure this is defined
 
-        # Fetch real-time URLs (ensure this function is defined)
-        urls = fetch_real_time_urls(query_params)
+        return render_template('engine.html', recommendations=recommendations)
+    # Render engine.html for GET requests
+    return render_template('engine.html')
 
-        return render_template('engine.html', recommendations=recommendations, urls=urls)
-    return render_template('engine.html')  # Render engine.html for GET requests
+### Sentiments Page ###
+
 
 @app.route('/sentiments.html', methods=['GET'])
 def sentiments():
     return render_template('sentiments.html')
+
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    user_input = request.form['text']
+    result = predict_sentiment(user_input)
+    return jsonify(result)
+
+
+@app.route('/emotion', methods=['POST'])
+def emotion():
+    user_input = request.form['text']
+    result = emotion_detection(user_input)
+    return jsonify(result)
+
+
+@app.route('/wordcloud', methods=['POST'])
+def wordcloud():
+    user_input = request.form['text']
+    generate_word_cloud(user_input)
+    return "Word Cloud Generated", 200
+
 
 # Load the Random Forest model and TF-IDF vectorizer
 with open('sentiment_model.pkl', 'rb') as model_file:
@@ -65,70 +93,47 @@ with open('tfidf_vectorizer.pkl', 'rb') as vectorizer_file:
     tfidf_vectorizer = pickle.load(vectorizer_file)
 
 # Preprocess the text data
+
+
 def preprocess_text(text):
     text = text.lower()  # Convert to lowercase
     # Remove special characters and numbers
     text = re.sub(r'[^a-zA-Z\s]', '', text)
     return text
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    user_input = request.form['text']  # Get the user input from the form
-    # Create a DataFrame for the input
-    test_data = pd.DataFrame({'text': [user_input]})
-
-    # Apply preprocessing
-    test_data['text'] = test_data['text'].apply(preprocess_text)
-
-    # Vectorize the preprocessed text data
-    X_test = tfidf_vectorizer.transform(test_data['text'])
-
-    # Make predictions
-    predictions = random_forest_model.predict(X_test)
-
-    # Return the result
-    return jsonify({'text': user_input, 'sentiment': predictions[0]})
+## Report Page ##
 
 
 @app.route('/reports.html', methods=['GET'])
 def reports():
-    # Example data for reports (in a real application, you would fetch this from a database or analysis)
-    report_data = {
-        "total_sentiments": 100,
-        "positive": 70,
-        "negative": 20,
-        "neutral": 10,
-    }
+    # Load models and vectorizer
+    caption_model, hashtag_model, tfidf_vectorizer = load_model_and_vectorizer()
 
-    # Generate or fetch recommended posts based on sentiments
-    recommended_posts = generate_recommended_posts(report_data)
+    # Check if models are loaded successfully
+    if not all([caption_model, hashtag_model, tfidf_vectorizer]):
+        return "Error loading models. Please check the logs."
 
-    return render_template('reports.html', report_data=report_data, recommended_posts=recommended_posts)
+    # Analyze the input CSV data and get the output
+    csv_output = analyze_csv_data(
+        caption_model, hashtag_model, tfidf_vectorizer, 'saved_posts.csv', 'predictions.csv')
 
+    # Check if the analysis was successful
+    if csv_output is None:
+        return "Error processing CSV data. Please check the logs."
 
-def generate_recommended_posts(report_data):
-    # This is a placeholder function. Implement your logic to generate or fetch recommended posts.
-    # Example recommended posts structure
-    return [
+    # Generate recommended posts based on predictions
+    recommended_posts = [
         {
-            "image_url": "https://picsum.photos/200/300",
-            "caption": "Amazing sunset view! #sunset #nature",
-            "hashtags": "#sunset #nature",
-            "timestamp": "2023-09-27 18:45:00"
-        },
-        {
-            "image_url": "https://picsum.photos/seed/1/200/300",
-            "caption": "Delicious meal! #food #yum",
-            "hashtags": "#food #yum",
-            "timestamp": "2023-09-28 12:00:00"
-        },
-        {
-            "image_url": "https://picsum.photos/seed/2/200/300",
-            "caption": "Adventure awaits! #travel #explore",
-            "hashtags": "#travel #explore",
-            "timestamp": "2023-09-28 10:30:00"
-        }
+            "image_url": get_random_images(['https://picsum.photos/200/300' for _ in range(20)], num_images=random.randint(1, 3)),
+            "caption": row['predicted_caption'],
+            "hashtags": row['predicted_hashtags'],
+            # Replace with actual timestamps or fetch dynamically
+            "timestamp": "2024-10-15 14:05:41"
+        } for _, row in csv_output.iterrows()
     ]
+
+    # Pass the output data to the template
+    return render_template('reports.html', recommended_posts=recommended_posts)
 
 
 @app.route('/analyze_sentiment', methods=['POST'])
@@ -158,21 +163,52 @@ def analyze_sentiment():
     return render_template('reports.html', analysis_result=analysis_result, recommended_posts=recommended_posts)
 
 
-@app.route('/contact.html', methods=['GET'])
-def report():
-    # Example data for reports (in a real application, you would fetch this from a database or analysis)
-    report_data = {
-        "total_sentiments": 100,
-        "positive": 70,
-        "negative": 20,
-        "neutral": 10,
-    }
+# Load dataset and train the model
+df = load_data()
+word2vec_model = train_word2vec(df)
 
-    # Generate or fetch recommended posts based on sentiments
-    recommended_posts = generate_recommended_posts(report_data)
+@app.route('/contact.html', methods=['GET', 'POST'])
+def index():
+    recommended_posts = []
+    if request.method == 'POST':
+        user_input = request.form.get('user_input', '')
+        # Make sure the function to recommend posts is correctly defined and returns the right data structure
+        recommended_posts = recommend_posts(user_input, df, word2vec_model)
+        return render_template('contact.html', user_input=user_input, recommended_posts=recommended_posts)
 
-    return render_template('contact.html', report_data=report_data, recommended_posts=recommended_posts)
+    return render_template('contact.html', recommended_posts=recommended_posts)
 
+
+
+# Get average Word2Vec embeddings for each post
+df['content_embeddings'] = df['tokenized_content'].apply(
+    lambda x: get_avg_word2vec(x, word2vec_model))
+
+
+# API
+df5 = pd.read_csv('recommended_content.csv')
+
+
+@app.route('/api.html')
+def api():
+    return render_template('api.html')
+
+# Route to fetch post data and sentiments
+
+
+@app.route('/get_pts')
+def get_pts():
+    posts = api_logic.generate_posts(df5)
+    return jsonify(posts)
+
+# Route to save recommended posts
+
+
+@app.route('/save_pts', methods=['POST'])
+def save_pts():
+    post_data = request.json
+    api_logic.save_post(post_data)
+    return jsonify({'message': 'Post saved successfully!'})
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -26,11 +26,17 @@
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="sentiments.html">Sentiments</a></li>
+          <li><a href="/">Home</a></li>
+         
+          <li class="dropdown"><a href="contact.html"><span>Model</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+          </li>
+          <li><a href="sentiments.html">Sentiments Analysis</a></li>
+          <li><a href="contact.html" class="active" >Content Recommandtions</a></li>
+          <li><a href="reports.html">Collaborative Recommandtions</a></li>
+        </ul>
           <li><a href="engine.html">Engine</a></li>
-          <li><a href="reports.html" class="active">Report</a></li>
-          <li><a href="contact.html">Contact</a></li>
+          <li><a href="api.html">API</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
@@ -40,59 +46,36 @@
 
   <main id="main">
     <section class="container mt-5 pt-5">
-      <h2 class="text-center mb-4">Sentiment Analysis Reports</h2>
-      <div class="row">
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Total Sentiments Analyzed</h5>
-              <p class="card-text">{{ report_data.total_sentiments }}</p>
-            </div>
-          </div>
+      <h2 class="text-center mb-4">Sentiment Analysis</h2>
+      <form method="POST" class="mb-4">
+        <div class="input-group">
+          <input type="text" class="form-control" name="user_input" placeholder="Enter your text for analysis" required>
+          <button class="btn btn-primary" type="submit">Analyze</button>
         </div>
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Positive Sentiments</h5>
-              <p class="card-text">{{ report_data.positive }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="row mt-3">
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Negative Sentiments</h5>
-              <p class="card-text">{{ report_data.negative }}</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Neutral Sentiments</h5>
-              <p class="card-text">{{ report_data.neutral }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      </form>
 
-      <h3 class="text-center mt-5">Recommended Posts Based on Sentiments</h3>
-      <div class="row mt-4">
-        {% for post in recommended_posts %}
-        <div class="col-md-4">
-          <div class="card mb-3">
-            <img src="{{ post.image_url }}" class="card-img-top" alt="Post Image">
+      {% if message %}
+        <div class="alert alert-info">{{ message }}</div>
+      {% endif %}
+<h3 class="text-center mt-5">Recommended Posts Based on Your Input</h3>
+<div class="row mt-4">
+    {% for post in recommended_posts %}
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <img src="{{ post.image_url | default('static/img/default.jpg') }}" class="card-img-top" alt="Post Image">
             <div class="card-body">
-              <h5 class="card-title">{{ post.caption }}</h5>
-              <p class="card-text">{{ post.hashtags }}</p>
-              <p class="card-text"><small class="text-muted">{{ post.timestamp }}</small></p>
+                <h5 class="card-title">{{ post.Caption }}</h5>
+                <p class="card-text">{{ post.Hashtags }}</p>
+                <div class="btn-group">
+                    <button class="btn btn-info">Comment</button>
+                    <button class="btn btn-success">View Post</button>
+                    <button class="btn btn-warning">Share</button>
+                </div>
             </div>
-          </div>
         </div>
-        {% endfor %}
-      </div>
+    </div>
+    {% endfor %}
+</div>
     </section>
   </main>
 
