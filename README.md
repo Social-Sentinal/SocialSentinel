@@ -56,6 +56,4 @@ The system is modular, interactive, and scalable — capable of API integration,
 * `/get_pts`: Generates post data from pre-analyzed CSV.
 * `/save_pts`: Saves recommended post data via API for integrations.
 
----
 
-```
