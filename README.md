@@ -56,4 +56,13 @@ The system is modular, interactive, and scalable — capable of API integration,
 * `/get_pts`: Generates post data from pre-analyzed CSV.
 * `/save_pts`: Saves recommended post data via API for integrations.
 
+### 🔹 Flow Chart
+<img width="12880" height="6448" alt="SocialSentinel" src="https://github.com/user-attachments/assets/553bad9f-8955-4ea2-8b78-1b6d8ed37269" />
+
+### 🔹 Fronted UI
+<img width="1920" height="1020" alt="home" src="https://github.com/user-attachments/assets/6b07b83d-e152-4e8b-9558-724e39609e3d" />
+<img width="1920" height="1020" alt="enginr" src="https://github.com/user-attachments/assets/53aae66a-4dc0-4f66-8e83-4f4dea303080" />
+
+
+
 
