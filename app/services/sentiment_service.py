@@ -1,12 +1,13 @@
-import os
 import random
 import pandas as pd
 from wordcloud import WordCloud
 import matplotlib
-matplotlib.use("Agg")  # Non-interactive backend to prevent GUI thread blocking
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from app.config import STATIC_DIR
+from app.extensions import db
+from app.models import SentimentLog
 from app.utils.data_loader import load_model
 from app.utils.text_utils import preprocess_text
 
@@ -26,47 +27,52 @@ def predict_sentiment(user_input: str) -> dict:
     model, vectorizer = get_sentiment_model_and_vectorizer()
     processed_input = preprocess_text(user_input)
 
-    if model is None or vectorizer is None:
-        return {
-            "text": user_input,
-            "sentiment": "Neutral",
-            "confidence": 0.5,
-            "distribution": {"positive": 33.33, "neutral": 33.33, "negative": 33.33}
-        }
+    sentiment = "Neutral"
+    confidence = 0.5
+    sentiment_dist = {"positive": 33.33, "neutral": 33.34, "negative": 33.33}
 
-    test_data = pd.DataFrame({"text": [processed_input]})
-    X_test = vectorizer.transform(test_data["text"])
+    if model is not None and vectorizer is not None:
+        try:
+            test_data = pd.DataFrame({"text": [processed_input]})
+            X_test = vectorizer.transform(test_data["text"])
+            probabilities = model.predict_proba(X_test)[0]
+            confidence = float(max(probabilities))
+            sentiment = str(model.predict(X_test)[0])
 
+            positive_prob = round(probabilities[0] * 100, 2) if len(probabilities) > 0 else 33.33
+            neutral_prob = round(probabilities[1] * 100, 2) if len(probabilities) > 1 else 33.34
+            negative_prob = round(probabilities[2] * 100, 2) if len(probabilities) > 2 else 33.33
+
+            sentiment_dist = {
+                "positive": positive_prob,
+                "neutral": neutral_prob,
+                "negative": negative_prob,
+            }
+        except Exception as e:
+            print(f"[Error] Prediction computation failed: {e}")
+
+    # Persist log to SQLite Database
     try:
-        probabilities = model.predict_proba(X_test)[0]
-        confidence = float(max(probabilities))
-        sentiment = str(model.predict(X_test)[0])
+        log_entry = SentimentLog(
+            input_text=user_input,
+            sentiment=sentiment,
+            confidence=confidence,
+            positive_score=sentiment_dist["positive"],
+            neutral_score=sentiment_dist["neutral"],
+            negative_score=sentiment_dist["negative"]
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+    except Exception as err:
+        db.session.rollback()
+        print(f"[Database Error] Saving sentiment log failed: {err}")
 
-        # Assuming class order: positive, neutral, negative
-        positive_prob = round(probabilities[0] * 100, 2) if len(probabilities) > 0 else 33.33
-        neutral_prob = round(probabilities[1] * 100, 2) if len(probabilities) > 1 else 33.33
-        negative_prob = round(probabilities[2] * 100, 2) if len(probabilities) > 2 else 33.33
-
-        sentiment_dist = {
-            "positive": positive_prob,
-            "neutral": neutral_prob,
-            "negative": negative_prob,
-        }
-
-        return {
-            "text": user_input,
-            "sentiment": sentiment,
-            "confidence": confidence,
-            "distribution": sentiment_dist
-        }
-    except Exception as e:
-        print(f"[Error] Prediction failed: {e}")
-        return {
-            "text": user_input,
-            "sentiment": "Neutral",
-            "confidence": 0.5,
-            "distribution": {"positive": 33.33, "neutral": 33.33, "negative": 33.33}
-        }
+    return {
+        "text": user_input,
+        "sentiment": sentiment,
+        "confidence": confidence,
+        "distribution": sentiment_dist
+    }
 
 
 def emotion_detection(user_input: str) -> dict:
@@ -76,11 +82,10 @@ def emotion_detection(user_input: str) -> dict:
 
 
 def generate_word_cloud(sentiment_text: str) -> str:
-    """Generate WordCloud image and save it to static directory."""
-    if not sentiment_text:
-        sentiment_text = "social sentinel sentiment analysis"
+    if not sentiment_text or not sentiment_text.strip():
+        sentiment_text = "SocialSentinel Sentiment Analysis Cloud Trends Insights"
+
     wordcloud = WordCloud(width=800, height=400, background_color="white").generate(sentiment_text)
-    
     output_path = STATIC_DIR / "wordcloud.png"
     STATIC_DIR.mkdir(parents=True, exist_ok=True)
     wordcloud.to_file(str(output_path))

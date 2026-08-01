@@ -1,7 +1,5 @@
 import random
-import pandas as pd
-
-from app.config import DATA_DIR
+from app.models import Post, UserInteraction
 from app.utils.data_loader import load_model
 
 _caption_model = None
@@ -18,46 +16,42 @@ def load_collab_models():
     return _caption_model, _hashtag_model, _tfidf_vectorizer2
 
 
-def analyze_csv_data(input_csv_name: str = "saved_posts.csv", output_csv_name: str = "predictions.csv") -> pd.DataFrame:
+def get_collaborative_recommendations(limit: int = 6) -> list[dict]:
     caption_model, hashtag_model, tfidf_vectorizer = load_collab_models()
 
-    input_path = DATA_DIR / input_csv_name
-    output_path = DATA_DIR / output_csv_name
+    # Query recent interaction history from database
+    interactions = UserInteraction.query.order_by(UserInteraction.id.desc()).limit(20).all()
+    posts = Post.query.limit(limit).all()
 
-    if not input_path.exists():
-        print(f"[Warning] Input CSV file for collaborative analysis does not exist: {input_path}")
-        # Create default predictions DataFrame
-        return pd.DataFrame([
-            {"predicted_caption": "Exploring beautiful places!", "predicted_hashtags": "#travel #adventure"},
-            {"predicted_caption": "Enjoying delicious coffee", "predicted_hashtags": "#coffee #morning"}
-        ])
+    recommended_results = []
 
-    try:
-        df = pd.read_csv(input_path)
-        if "caption" not in df.columns or "hashtags" not in df.columns:
-            # Handle headers if missing
-            df.columns = ["caption", "hashtags", "timestamp", "duration"][:len(df.columns)]
+    if interactions and tfidf_vectorizer and caption_model and hashtag_model:
+        for idx, inter in enumerate(interactions[:limit]):
+            input_text = f"{inter.caption or 'Exploring nature'} {inter.hashtags or '#travel'}"
+            try:
+                tfidf_vec = tfidf_vectorizer.transform([input_text])
+                pred_caption = caption_model.predict(tfidf_vec)[0]
+                pred_hashtags = hashtag_model.predict(tfidf_vec)[0]
+            except Exception:
+                pred_caption = inter.caption or "Chasing sunrise views"
+                pred_hashtags = inter.hashtags or "#morning #vibes"
 
-        df["text"] = df["caption"].astype(str) + " " + df["hashtags"].astype(str)
+            recommended_results.append({
+                "image_url": f"https://picsum.photos/300/200?random={idx + 10}",
+                "predicted_caption": str(pred_caption),
+                "predicted_hashtags": str(pred_hashtags),
+                "timestamp": inter.timestamp,
+                "engagement_score": round(min(0.95, 0.60 + (inter.view_duration * 0.05)), 2)
+            })
 
-        if caption_model and hashtag_model and tfidf_vectorizer:
-            input_tfidf = tfidf_vectorizer.transform(df["text"])
-            df["predicted_caption"] = caption_model.predict(input_tfidf)
-            df["predicted_hashtags"] = hashtag_model.predict(input_tfidf)
-        else:
-            df["predicted_caption"] = df["caption"]
-            df["predicted_hashtags"] = df["hashtags"]
+    if not recommended_results:
+        for idx, p in enumerate(posts):
+            recommended_results.append({
+                "image_url": p.image_url or f"https://picsum.photos/300/200?random={idx + 1}",
+                "predicted_caption": f"Recommended: {p.caption}",
+                "predicted_hashtags": p.hashtags or "#trending #socialsentinel",
+                "timestamp": p.timestamp,
+                "engagement_score": round(random.uniform(0.70, 0.95), 2)
+            })
 
-        df.to_csv(output_path, index=False)
-        return df
-    except Exception as e:
-        print(f"[Error] Error during collaborative analysis: {e}")
-        return pd.DataFrame([
-            {"predicted_caption": "Discover amazing vibes", "predicted_hashtags": "#lifestyle #explore"}
-        ])
-
-
-def get_random_images(image_urls: list[str], num_images: int = 3) -> list[str]:
-    if not image_urls:
-        return ["https://picsum.photos/200/300"]
-    return random.sample(image_urls, min(num_images, len(image_urls)))
+    return recommended_results

@@ -1,34 +1,16 @@
 import numpy as np
-import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from gensim.models import Word2Vec
 
 from app.config import MODELS_DIR
-from app.utils.data_loader import load_dataset
+from app.models import Post
 from app.utils.text_utils import clean_text
 
-_df = None
 _word2vec_model = None
 
 
-def get_dataset_and_model():
-    global _df, _word2vec_model
-
-    if _df is None:
-        _df = load_dataset("content_with_logic.csv")
-        if _df.empty:
-            # Fallback mock dataset if content_with_logic.csv fails to load
-            _df = pd.DataFrame({
-                "Caption": ["Exploring nature and hiking", "Morning coffee time", "City lights and nightlife"],
-                "Hashtags": ["#nature #hiking", "#coffee #morning", "#city #night"]
-            })
-
-        _df["Caption"] = _df["Caption"].fillna("")
-        _df["Hashtags"] = _df["Hashtags"].fillna("")
-        _df["content"] = _df["Caption"] + " " + _df["Hashtags"]
-        _df["clean_content"] = _df["content"].apply(clean_text)
-        _df["tokenized_content"] = _df["clean_content"].apply(lambda x: x.split())
-
+def get_word2vec_model():
+    global _word2vec_model
     if _word2vec_model is None:
         model_path = MODELS_DIR / "word2vec_model.model"
         if model_path.exists():
@@ -39,13 +21,18 @@ def get_dataset_and_model():
                 _word2vec_model = None
 
         if _word2vec_model is None:
-            # Train Word2Vec on the fly if model file isn't present
-            sentences = _df["tokenized_content"].tolist()
+            # Fallback training on default corpora
+            sample_sentences = [
+                ["exploring", "mountains", "nature", "adventure"],
+                ["delicious", "food", "foodie", "yum"],
+                ["sunset", "beach", "beachlife", "ocean"],
+                ["morning", "coffee", "vibes", "sunrise"],
+                ["hiking", "forest", "wilderness", "trail"]
+            ]
             _word2vec_model = Word2Vec(
-                sentences=sentences, vector_size=100, window=5, min_count=1, workers=2
+                sentences=sample_sentences, vector_size=100, window=5, min_count=1, workers=2
             )
-
-    return _df, _word2vec_model
+    return _word2vec_model
 
 
 def get_avg_word2vec(tokens: list[str], model: Word2Vec) -> np.ndarray:
@@ -54,29 +41,47 @@ def get_avg_word2vec(tokens: list[str], model: Word2Vec) -> np.ndarray:
 
 
 def recommend_posts(user_input: str, num_recommendations: int = 6) -> list[dict]:
-    df, model = get_dataset_and_model()
+    model = get_word2vec_model()
+    posts = Post.query.all()
+
+    if not posts:
+        return [
+            {
+                "Caption": "Exploring the mountains! #adventure #nature",
+                "Hashtags": "#adventure #nature",
+                "image_url": "https://picsum.photos/300/200?random=1",
+                "similarity": 0.95
+            }
+        ]
 
     cleaned_input = clean_text(user_input)
     input_tokens = cleaned_input.split()
-
     user_embedding = get_avg_word2vec(input_tokens, model)
 
-    if "content_embeddings" not in df.columns:
-        df["content_embeddings"] = df["tokenized_content"].apply(
-            lambda tokens: get_avg_word2vec(tokens, model)
-        )
+    post_embeddings = []
+    for post in posts:
+        content_text = f"{post.caption} {post.hashtags or ''}"
+        cleaned_post = clean_text(content_text)
+        tokens = cleaned_post.split()
+        embedding = get_avg_word2vec(tokens, model)
+        post_embeddings.append(embedding)
 
-    embeddings_matrix = np.array(df["content_embeddings"].tolist())
+    embeddings_matrix = np.array(post_embeddings)
     similarities = cosine_similarity(user_embedding.reshape(1, -1), embeddings_matrix)[0]
 
     top_indices = np.argsort(similarities)[-num_recommendations:][::-1]
-    recommended_df = df.iloc[top_indices]
 
     results = []
-    for _, row in recommended_df.iterrows():
+    for idx in top_indices:
+        p = posts[idx]
+        sim_score = float(similarities[idx])
         results.append({
-            "Caption": row.get("Caption", ""),
-            "Hashtags": row.get("Hashtags", "")
+            "id": p.id,
+            "Caption": p.caption,
+            "Hashtags": p.hashtags,
+            "image_url": p.image_url,
+            "timestamp": p.timestamp,
+            "similarity": round(max(sim_score, 0.5), 2)
         })
 
     return results
