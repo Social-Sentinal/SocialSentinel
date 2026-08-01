@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <link href="static/css/main.css" rel="stylesheet">
+  <link href="/static/css/main.css" rel="stylesheet">
 </head>
 <body>
 
@@ -155,14 +155,18 @@
         setSearching(true);
 
         try {
+          const formData = new FormData();
+          formData.append('user_input', searchQuery);
           const res = await fetch('/contact.html', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ 'user_input': searchQuery })
+            body: formData
           });
-          const resPosts = await fetch('/api/v1/posts');
-          const postsJson = await resPosts.json();
-          setSearchResults(postsJson.data.slice(0, 6));
+          const text = await res.text();
+          
+          // Fetch recommendation posts via Word2Vec backend
+          const apiRes = await fetch(`/get_pts`);
+          const apiJson = await apiRes.json();
+          setSearchResults(apiJson);
         } catch (err) {
           console.error('Search error:', err);
         } finally {
@@ -177,24 +181,21 @@
         setAnalyzing(true);
 
         try {
-          const res = await fetch('/predict', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ 'text': sentimentInput })
-          });
-          const data = await res.json();
-          setSentimentResult(data);
+          const formData = new FormData();
+          formData.append('text', sentimentInput);
 
-          const emotionRes = await fetch('/emotion', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ 'text': sentimentInput })
-          });
-          const emotionData = await emotionRes.json();
-          setEmotionsResult(emotionData);
+          const [sentRes, emoRes] = await Promise.all([
+            fetch('/predict', { method: 'POST', body: formData }),
+            fetch('/emotion', { method: 'POST', body: formData })
+          ]);
 
+          const sentJson = await sentRes.json();
+          const emoJson = await emoRes.json();
+
+          setSentimentResult(sentJson);
+          setEmotionsResult(emoJson);
         } catch (err) {
-          console.error('Sentiment analysis error:', err);
+          console.error('Sentiment Analysis error:', err);
         } finally {
           setAnalyzing(false);
         }
@@ -239,7 +240,7 @@
           <!-- Left Sidebar -->
           <aside className="ss-sidebar">
             <a href="/" className="ss-brand">
-              <img src="static/img/logo.png" alt="Logo" onError={(e) => e.target.src='https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=100&auto=format&fit=crop&q=80'} />
+              <img src="/static/img/logo.png" alt="Logo" onError={(e) => e.target.src='https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=100&auto=format&fit=crop&q=80'} />
               <span className="ss-brand-text">SocialSentinel</span>
             </a>
 
@@ -256,7 +257,7 @@
                   <span>Explore Search</span>
                 </a>
               </li>
-              <li class="ss-nav-item">
+              <li className="ss-nav-item">
                 <a href="#" className={activeTab === 'engine' ? 'active' : ''} onClick={() => setActiveTab('engine')}>
                   <i className={`bi ${activeTab === 'engine' ? 'bi-play-btn-fill' : 'bi-play-btn'}`}></i>
                   <span>Feed Engine</span>
@@ -275,7 +276,7 @@
                 </a>
               </li>
 
-              <!-- Admin Dropdown -->
+            
               <li className="ss-nav-item dropdown">
                 <button className="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <i className="bi bi-shield-lock"></i> <span>Admin Access</span>
@@ -295,7 +296,7 @@
             </ul>
           </aside>
 
-          <!-- Main Feed Content Area -->
+   
           <main className="ss-main-content">
             <div className="ss-feed-container">
 
@@ -560,7 +561,7 @@
                     </div>
                     <div className="table-responsive">
                       <table className="table table-hover align-middle">
-                        <thead class="table-light">
+                        <thead className="table-light">
                           <tr>
                             <th>User</th>
                             <th>Caption Preview</th>
@@ -591,11 +592,11 @@
 
           {/* Centered React Comment Modal */}
           {showCommentModal && (
-            <div className="modal fade show d-block" style={{background: 'rgba(0,0,0,0.5)'}} tabindex="-1">
+            <div className="modal fade show d-block" style={{background: 'rgba(0,0,0,0.5)'}} tabIndex="-1">
               <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                   <div className="modal-header">
-                    <h5 className="modal-title fw-bold"><i class="bi bi-chat-dots text-primary me-2"></i>Add Comment</h5>
+                    <h5 className="modal-title fw-bold"><i className="bi bi-chat-dots text-primary me-2"></i>Add Comment</h5>
                     <button type="button" className="btn-close" onClick={() => setShowCommentModal(false)}></button>
                   </div>
                   <div className="modal-body">
@@ -612,11 +613,11 @@
 
           {/* Centered React Share Modal */}
           {showShareModal && (
-            <div className="modal fade show d-block" style={{background: 'rgba(0,0,0,0.5)'}} tabindex="-1">
+            <div className="modal fade show d-block" style={{background: 'rgba(0,0,0,0.5)'}} tabIndex="-1">
               <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                   <div className="modal-header">
-                    <h5 className="modal-title fw-bold"><i class="bi bi-share text-primary me-2"></i>Share Post</h5>
+                    <h5 className="modal-title fw-bold"><i className="bi bi-share text-primary me-2"></i>Share Post</h5>
                     <button type="button" className="btn-close" onClick={() => setShowShareModal(false)}></button>
                   </div>
                   <div className="modal-body text-center py-4">
