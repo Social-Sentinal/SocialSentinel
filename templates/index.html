@@ -26,6 +26,7 @@
 
   <!-- React Application Script -->
   <script type="text/babel">
+    {% raw %}
     const { useState, useEffect, useRef } = React;
 
     // --- Main Application Component ---
@@ -637,6 +638,7 @@
     const rootElement = document.getElementById('root');
     const root = ReactDOM.createRoot(rootElement);
     root.render(<SocialSentinelApp />);
+    {% endraw %}
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

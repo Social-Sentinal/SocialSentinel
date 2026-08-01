@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from app.config import Config, DATA_DIR, STATIC_DIR, TEMPLATES_DIR
 from app.extensions import db
 
@@ -27,6 +27,21 @@ def create_app(config_class=Config) -> Flask:
     with app.app_context():
         db.create_all()
         seed_database()
+
+    # Register Error Handlers
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        import logging
+        logging.exception("An internal server error occurred: %s", e)
+        if request.path.startswith("/api/"):
+            return {"status": "error", "message": "Internal Server Error"}, 500
+        return "<h1>500 Internal Server Error</h1><p>An unexpected error occurred on the server.</p>", 500
+
+    @app.errorhandler(404)
+    def page_not_found(e):
+        if request.path.startswith("/api/"):
+            return {"status": "error", "message": "Resource Not Found"}, 404
+        return "<h1>404 Not Found</h1><p>The requested URL was not found on the server.</p>", 404
 
     return app
 
