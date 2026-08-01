@@ -3,96 +3,84 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SocialSentinel - Sentiment Analysis Engine</title>
+  <title>SocialSentinel - Instagram Sentiment Studio</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="static/css/main.css" rel="stylesheet">
   
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  <!-- Header -->
-  <header class="header fixed-top">
-    <div class="container d-flex align-items-center justify-content-between">
-      <a href="/" class="logo d-flex align-items-center text-decoration-none">
-        <img src="static/img/logo.png" alt="SocialSentinel" onerror="this.src='https://picsum.photos/40/40'">
-        <h1 class="sitename ms-2">SocialSentinel</h1>
-      </a>
+  <!-- Sidebar -->
+  <aside class="ig-sidebar">
+    <a href="/" class="ig-brand">
+      <img src="static/img/logo.png" alt="Logo" onerror="this.src='https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=100&auto=format&fit=crop&q=80'">
+      <span class="ig-brand-text">Instagram</span>
+    </a>
 
-      <nav class="navmenu d-none d-lg-block">
-        <ul>
-          <li><a href="/">Home</a></li>
-          <li><a href="/sentiments.html" class="active">Sentiment Analysis</a></li>
-          <li><a href="/contact.html">Content Recommendations</a></li>
-          <li><a href="/reports.html">Collaborative Insights</a></li>
-          <li><a href="/engine.html">Feed Engine</a></li>
-          <li><a href="/api.html">API Portal</a></li>
-        </ul>
-      </nav>
+    <ul class="ig-nav-list">
+      <li class="ig-nav-item"><a href="/"><i class="bi bi-house-door"></i> <span>Home</span></a></li>
+      <li class="ig-nav-item"><a href="/contact.html"><i class="bi bi-compass"></i> <span>Explore Search</span></a></li>
+      <li class="ig-nav-item"><a href="/engine.html"><i class="bi bi-play-btn"></i> <span>Feed Engine</span></a></li>
+      <li class="ig-nav-item"><a href="/sentiments.html" class="active"><i class="bi bi-chat-quote-fill"></i> <span>Sentiment Studio</span></a></li>
+      <li class="ig-nav-item"><a href="/reports.html"><i class="bi bi-bar-chart-line"></i> <span>Insights</span></a></li>
+      <li class="ig-nav-item"><a href="/api.html"><i class="bi bi-code-slash"></i> <span>Developer API</span></a></li>
+      <li class="ig-nav-item mt-auto"><a href="#"><i class="bi bi-person-circle"></i> <span>Profile</span></a></li>
+    </ul>
+  </aside>
 
-      <a class="btn-getstarted" href="/sentiments.html">Analyze Text</a>
-    </div>
-  </header>
+  <main class="ig-main-content">
+    <div class="container" style="max-width: 750px;">
+      <div class="text-center mb-4">
+        <h3 class="fw-bold">Instagram Sentiment Analysis Studio</h3>
+        <p class="text-secondary small">Analyze caption polarity, emotion intensity, and save queries to database logs.</p>
+      </div>
 
-  <main class="container pt-5 mt-5">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        
-        <div class="card p-4 mb-4">
-          <h3 class="fw-bold mb-3"><i class="bi bi-chat-left-quote text-primary me-2"></i>Sentiment Analysis Dashboard</h3>
-          <p class="text-secondary">Enter any caption or text statement to compute TF-IDF sentiment polarity and emotion intensity scores.</p>
+      <div class="ig-post-card p-4">
+        <form id="sentimentForm">
+          <div class="mb-3">
+            <label for="textInput" class="form-label fw-bold">Instagram Caption Text:</label>
+            <textarea id="textInput" class="form-control rounded-3" rows="4" placeholder="e.g. He was more than my brother; he was my best friend. Excited to start this new journey!" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 fw-bold">
+            <i class="bi bi-cpu me-2"></i>Analyze Caption & Log to DB
+          </button>
+        </form>
+      </div>
 
-          <form id="sentimentForm">
-            <div class="mb-3">
-              <label for="textInput" class="form-label fw-semibold">Input Caption / Post Text:</label>
-              <textarea id="textInput" class="form-control rounded-3" rows="4" placeholder="e.g. Exploring breathtaking mountain views and sunset trails! #adventure" required></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary px-4 py-2">
-              <i class="bi bi-cpu me-2"></i>Analyze Sentiment & Save to DB
-            </button>
-          </form>
-        </div>
+      <!-- Result Card -->
+      <div id="resultCard" class="ig-post-card p-4 d-none">
+        <h5 class="fw-bold mb-3">Classification Output</h5>
+        <div id="resultOutput" class="mb-4"></div>
 
-        <!-- Result Card -->
-        <div id="resultCard" class="card p-4 mb-4 d-none">
-          <h4 class="fw-bold mb-3">Classification Results</h4>
-          <div id="resultOutput" class="mb-4"></div>
-
-          <div class="row gy-4">
-            <div class="col-md-6">
-              <div class="chart-card">
-                <h6 class="fw-bold mb-3 text-center">Sentiment Distribution (%)</h6>
-                <div class="chart-container">
-                  <canvas id="sentimentChart"></canvas>
-                </div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="bg-light p-3 rounded-3 border">
+              <h6 class="fw-bold text-center mb-3">Sentiment Gauge (%)</h6>
+              <div style="height: 200px;">
+                <canvas id="sentimentChart"></canvas>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="chart-card">
-                <h6 class="fw-bold mb-3 text-center">Emotion Intensity Detection</h6>
-                <div class="chart-container">
-                  <canvas id="emotionChart"></canvas>
-                </div>
+          </div>
+          <div class="col-md-6">
+            <div class="bg-light p-3 rounded-3 border">
+              <h6 class="fw-bold text-center mb-3">Emotion Breakdown</h6>
+              <div style="height: 200px;">
+                <canvas id="emotionChart"></canvas>
               </div>
             </div>
           </div>
         </div>
-
       </div>
+
     </div>
   </main>
 
-  <footer class="text-center mt-5 py-4">
-    <p class="mb-0">&copy; 2026 SocialSentinel Sentiment Classifier.</p>
-  </footer>
-
   <script>
-    let sentimentChartInst = null;
-    let emotionChartInst = null;
+    let sChart = null, eChart = null;
 
     document.getElementById('sentimentForm').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -106,27 +94,20 @@
         });
         const data = await res.json();
 
-        const resultCard = document.getElementById('resultCard');
-        const resultOutput = document.getElementById('resultOutput');
-        resultCard.classList.remove('d-none');
-
-        const badgeClass = data.sentiment === 'Positive' ? 'badge-positive' :
-                           data.sentiment === 'Negative' ? 'badge-negative' : 'badge-neutral';
-
-        resultOutput.innerHTML = `
+        document.getElementById('resultCard').classList.remove('d-none');
+        document.getElementById('resultOutput').innerHTML = `
           <div class="p-3 bg-light rounded-3 border">
-            <h5 class="fw-bold mb-2">Text: "<span class="text-primary">${data.text}</span>"</h5>
-            <div class="d-flex align-items-center gap-3">
-              <div>Sentiment: <span class="badge badge-pill ${badgeClass}">${data.sentiment}</span></div>
-              <div>Confidence: <strong>${(data.confidence * 100).toFixed(2)}%</strong></div>
+            <div class="fw-bold text-dark">Caption: "${data.text}"</div>
+            <div class="d-flex align-items-center gap-3 mt-2">
+              <span class="badge bg-primary fs-6">${data.sentiment}</span>
+              <span class="text-muted">Confidence: <strong>${(data.confidence * 100).toFixed(2)}%</strong></span>
             </div>
           </div>
         `;
 
-        // Render Doughnut Sentiment Chart
-        const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
-        if (sentimentChartInst) sentimentChartInst.destroy();
-        sentimentChartInst = new Chart(sentimentCtx, {
+        const sCtx = document.getElementById('sentimentChart').getContext('2d');
+        if (sChart) sChart.destroy();
+        sChart = new Chart(sCtx, {
           type: 'doughnut',
           data: {
             labels: ['Positive', 'Neutral', 'Negative'],
@@ -138,33 +119,30 @@
           options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // Fetch Emotion Intensity
-        const emotionRes = await fetch('/emotion', {
+        const eRes = await fetch('/emotion', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({ 'text': text })
         });
-        const emotionData = await emotionRes.json();
+        const eData = await eRes.json();
 
-        const emotionCtx = document.getElementById('emotionChart').getContext('2d');
-        if (emotionChartInst) emotionChartInst.destroy();
-        emotionChartInst = new Chart(emotionCtx, {
+        const eCtx = document.getElementById('emotionChart').getContext('2d');
+        if (eChart) eChart.destroy();
+        eChart = new Chart(eCtx, {
           type: 'bar',
           data: {
-            labels: Object.keys(emotionData.emotions),
+            labels: Object.keys(eData.emotions),
             datasets: [{
-              label: 'Intensity Score',
-              data: Object.values(emotionData.emotions),
-              backgroundColor: 'rgba(79, 70, 229, 0.65)',
-              borderColor: '#4f46e5',
-              borderWidth: 1
+              label: 'Intensity',
+              data: Object.values(eData.emotions),
+              backgroundColor: '#0095f6'
             }]
           },
           options: { responsive: true, maintainAspectRatio: false }
         });
 
       } catch (err) {
-        console.error('Sentiment analysis error:', err);
+        console.error('Sentiment error:', err);
       }
     });
   </script>

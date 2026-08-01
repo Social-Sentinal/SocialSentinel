@@ -3,103 +3,95 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SocialSentinel - Developer API Portal</title>
+  <title>SocialSentinel - Instagram Developer API Portal</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="static/css/main.css" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Header -->
-  <header class="header fixed-top">
-    <div class="container d-flex align-items-center justify-content-between">
-      <a href="/" class="logo d-flex align-items-center text-decoration-none">
-        <img src="static/img/logo.png" alt="SocialSentinel" onerror="this.src='https://picsum.photos/40/40'">
-        <h1 class="sitename ms-2">SocialSentinel</h1>
-      </a>
+  <!-- Sidebar -->
+  <aside class="ig-sidebar">
+    <a href="/" class="ig-brand">
+      <img src="static/img/logo.png" alt="Logo" onerror="this.src='https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=100&auto=format&fit=crop&q=80'">
+      <span class="ig-brand-text">Instagram</span>
+    </a>
 
-      <nav class="navmenu d-none d-lg-block">
-        <ul>
-          <li><a href="/">Home</a></li>
-          <li><a href="/sentiments.html">Sentiment Analysis</a></li>
-          <li><a href="/contact.html">Content Recommendations</a></li>
-          <li><a href="/reports.html">Collaborative Insights</a></li>
-          <li><a href="/engine.html">Feed Engine</a></li>
-          <li><a href="/api.html" class="active">API Portal</a></li>
-        </ul>
-      </nav>
+    <ul class="ig-nav-list">
+      <li class="ig-nav-item"><a href="/"><i class="bi bi-house-door"></i> <span>Home</span></a></li>
+      <li class="ig-nav-item"><a href="/contact.html"><i class="bi bi-compass"></i> <span>Explore Search</span></a></li>
+      <li class="ig-nav-item"><a href="/engine.html"><i class="bi bi-play-btn"></i> <span>Feed Engine</span></a></li>
+      <li class="ig-nav-item"><a href="/sentiments.html"><i class="bi bi-chat-quote"></i> <span>Sentiment Studio</span></a></li>
+      <li class="ig-nav-item"><a href="/reports.html"><i class="bi bi-bar-chart-line"></i> <span>Insights</span></a></li>
+      <li class="ig-nav-item"><a href="/api.html" class="active"><i class="bi bi-code-slash"></i> <span>Developer API</span></a></li>
+      <li class="ig-nav-item mt-auto"><a href="#"><i class="bi bi-person-circle"></i> <span>Profile</span></a></li>
+    </ul>
+  </aside>
 
-      <a class="btn-getstarted" href="/get_pts" target="_blank">Raw JSON</a>
-    </div>
-  </header>
-
-  <main class="container pt-5 mt-5">
-    <div class="text-center my-4">
-      <h2 class="fw-bold">Developer API & Endpoint Testing</h2>
-      <p class="text-secondary">Explore REST API endpoints returning sentiment scores and engagement predictions directly from SQLite DB entities.</p>
-    </div>
-
-    <!-- API Posts List -->
-    <div class="card p-4 mb-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="fw-bold mb-0">Analyzed Posts Endpoint (`/get_pts`)</h4>
-        <button class="btn btn-outline-primary btn-sm rounded-3" onclick="fetchApiPosts()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh API Data</button>
+  <main class="ig-main-content">
+    <div class="container" style="max-width: 850px;">
+      <div class="text-center mb-4">
+        <h3 class="fw-bold">Instagram Sentiment & Recommendation API</h3>
+        <p class="text-secondary small">REST JSON endpoints delivering real dataset posts, sentiment polarities, and engagement predictions.</p>
       </div>
 
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>#</th>
-              <th>Caption</th>
-              <th>Sentiment</th>
-              <th>Polarity Score</th>
-              <th>Engagement Prediction</th>
-            </tr>
-          </thead>
-          <tbody id="apiPostsTable">
-            <tr>
-              <td colspan="5" class="text-center py-4 text-muted">Loading API post records...</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="ig-post-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Endpoint: GET `/get_pts`</h5>
+          <a href="/get_pts" target="_blank" class="btn btn-outline-primary btn-sm rounded-3">Open Raw JSON &rarr;</a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Username</th>
+                <th>Caption Preview</th>
+                <th>Sentiment</th>
+                <th>Score</th>
+                <th>Prediction</th>
+              </tr>
+            </thead>
+            <tbody id="apiTableBody">
+              <tr>
+                <td colspan="5" class="text-center py-3 text-muted">Fetching API data from database...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+
     </div>
   </main>
 
-  <footer class="text-center mt-5 py-4">
-    <p class="mb-0">&copy; 2026 SocialSentinel Developer API Service.</p>
-  </footer>
-
   <script>
-    async function fetchApiPosts() {
+    async function loadApiData() {
       try {
         const res = await fetch('/get_pts');
         const posts = await res.json();
-        const tbody = document.getElementById('apiPostsTable');
+        const tbody = document.getElementById('apiTableBody');
         tbody.innerHTML = '';
 
-        posts.forEach((post, index) => {
-          const badgeClass = post.sentiment === 'Positive' ? 'badge-positive' :
-                             post.sentiment === 'Negative' ? 'badge-negative' : 'badge-neutral';
+        posts.forEach(p => {
+          const badgeClass = p.sentiment === 'Positive' ? 'bg-success' : 'bg-warning text-dark';
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${index + 1}</td>
-            <td><strong>${post.caption}</strong></td>
-            <td><span class="badge badge-pill ${badgeClass}">${post.sentiment}</span></td>
-            <td><strong>${post.score}</strong></td>
-            <td><span class="text-primary fw-semibold">${post.prediction}</span></td>
+            <td><strong>@${p.username}</strong></td>
+            <td><span class="text-truncate d-inline-block" style="max-width:250px;">${p.caption}</span></td>
+            <td><span class="badge ${badgeClass}">${p.sentiment}</span></td>
+            <td><strong>${p.score}</strong></td>
+            <td><span class="text-primary fw-semibold">${p.prediction}</span></td>
           `;
           tbody.appendChild(tr);
         });
       } catch (err) {
-        console.error('Error fetching API posts:', err);
+        console.error('Error fetching API table:', err);
       }
     }
 
-    document.addEventListener('DOMContentLoaded', fetchApiPosts);
+    document.addEventListener('DOMContentLoaded', loadApiData);
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

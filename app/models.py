@@ -6,12 +6,15 @@ class Post(db.Model):
     __tablename__ = "posts"
 
     id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), default="humansofny")
+    user_avatar = db.Column(db.String(512), default="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80")
+    location = db.Column(db.String(128), default="New York, NY")
     caption = db.Column(db.Text, nullable=False)
     hashtags = db.Column(db.String(255), nullable=True)
     image_url = db.Column(db.String(512), nullable=True)
-    likes_count = db.Column(db.Integer, default=0)
-    comments_count = db.Column(db.Integer, default=0)
-    views_count = db.Column(db.Integer, default=0)
+    likes_count = db.Column(db.Integer, default=1240)
+    comments_count = db.Column(db.Integer, default=85)
+    views_count = db.Column(db.Integer, default=3420)
     timestamp = db.Column(db.String(64), nullable=True)
     sentiment = db.Column(db.String(32), default="Neutral")
     score = db.Column(db.Float, default=0.5)
@@ -19,9 +22,12 @@ class Post(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
+            "username": self.username or "humansofny",
+            "user_avatar": self.user_avatar or "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+            "location": self.location or "New York, NY",
             "caption": self.caption,
-            "hashtags": self.hashtags or "",
-            "image_url": self.image_url or "https://picsum.photos/300/200",
+            "hashtags": self.hashtags or "#life #story",
+            "image_url": self.image_url or "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&auto=format&fit=crop&q=80",
             "likes_count": self.likes_count,
             "comments_count": self.comments_count,
             "views_count": self.views_count,
