@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: socialsentinel
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: gunicorn "run:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APIFY_API_TOKEN
+        sync: false

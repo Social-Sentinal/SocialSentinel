@@ -39,6 +39,9 @@ SocialSentinel/
 ├── scripts/                    # Utility & Scraper Scripts
 ├── static/                     # CSS, JS, Vendor, and Image Assets
 ├── templates/                  # Jinja2 HTML Templates
+├── Procfile                    # Web process configuration for Render/PaaS
+├── render.yaml                 # Render Blueprint deployment configuration
+├── build.sh                    # Build script for Render deployment
 ├── run.py                      # Flask Application Launcher
 ├── requirements.txt            # Python Package Dependencies
 └── README.md                   # Project Documentation
@@ -46,7 +49,7 @@ SocialSentinel/
 
 ---
 
-## 🛠️ Installation & Setup
+## 🛠️ Installation & Local Setup
 
 1. **Clone the Repository**:
    ```bash
@@ -73,6 +76,19 @@ SocialSentinel/
    python run.py
    ```
    Open your browser and navigate to `http://127.0.0.1:5000`.
+
+---
+
+## 🌐 Deploy to Render (render.com)
+
+1. Log in to [Render](https://render.com/).
+2. Click **New +** -> **Web Service** (or **Blueprint**).
+3. Connect your GitHub repository `SocialSentinel`.
+4. Render will automatically detect `render.yaml` or you can manually configure:
+   - **Environment**: `Python 3`
+   - **Build Command**: `./build.sh` (or `pip install -r requirements.txt`)
+   - **Start Command**: `gunicorn "run:app"`
+5. Click **Create Web Service**. Render will build and deploy your application live!
 
 ---
 
