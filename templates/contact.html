@@ -15,6 +15,66 @@
   <link href="static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link href="static/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
   <link href="static/css/main.css" rel="stylesheet">
+
+  <style>
+    /* Custom card design */
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: transform 0.2s ease-in-out;
+    }
+    .card:hover {
+      transform: translateY(-10px);
+    }
+    .card-img-top {
+      height: 200px;
+      object-fit: cover;
+    }
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .card-text {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    .btn-group .btn {
+      font-size: 0.85rem;
+      margin-right: 5px;
+    }
+
+    /* Form styling */
+    .input-group {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .form-control {
+      border-radius: 20px 0 0 20px;
+      padding: 15px;
+      font-size: 1rem;
+    }
+    .btn-primary {
+      border-radius: 0 20px 20px 0;
+      padding: 10px 20px;
+      font-size: 1rem;
+    }
+
+    /* Section heading */
+    h2, h3 {
+      font-weight: bold;
+      color: #343a40;
+    }
+
+    /* Section background */
+    section {
+      background-color: #f8f9fa;
+      padding: 40px 20px;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body class="index-page">
   <header id="header" class="header d-flex align-items-center fixed-top">
@@ -27,14 +87,13 @@
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="/">Home</a></li>
-         
           <li class="dropdown"><a href="contact.html"><span>Model</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
+              <li><a href="sentiments.html">Sentiments Analysis</a></li>
+              <li><a href="contact.html" class="active">Content Recommendations</a></li>
+              <li><a href="reports.html">Collaborative Recommendations</a></li>
+            </ul>
           </li>
-          <li><a href="sentiments.html">Sentiments Analysis</a></li>
-          <li><a href="contact.html" class="active" >Content Recommandtions</a></li>
-          <li><a href="reports.html">Collaborative Recommandtions</a></li>
-        </ul>
           <li><a href="engine.html">Engine</a></li>
           <li><a href="api.html">API</a></li>
         </ul>
@@ -46,7 +105,7 @@
 
   <main id="main">
     <section class="container mt-5 pt-5">
-      <h2 class="text-center mb-4">Sentiment Analysis</h2>
+      <h2 class="text-center mb-4">Content Based Recommendations</h2>
       <form method="POST" class="mb-4">
         <div class="input-group">
           <input type="text" class="form-control" name="user_input" placeholder="Enter your text for analysis" required>
@@ -55,27 +114,35 @@
       </form>
 
       {% if message %}
-        <div class="alert alert-info">{{ message }}</div>
+        <div class="alert alert-info text-center">{{ message }}</div>
       {% endif %}
-<h3 class="text-center mt-5">Recommended Posts Based on Your Input</h3>
-<div class="row mt-4">
-    {% for post in recommended_posts %}
-    <div class="col-md-4">
-        <div class="card mb-3">
-            <img src="{{ post.image_url | default('static/img/default.jpg') }}" class="card-img-top" alt="Post Image">
+
+      <h3 class="text-center mt-5">Recommended Posts Based on Your Input</h3>
+      <div class="row mt-4">
+        {% for post in recommended_posts %}
+        <div class="col-md-4">
+          <div class="card mb-4">
+            <!-- Added random image URLs using Picsum -->
+            <img src="{{ post.image_url | default('https://picsum.photos/300/200?random={{ loop.index }}') }}" class="card-img-top" alt="Post Image">
             <div class="card-body">
-                <h5 class="card-title">{{ post.Caption }}</h5>
-                <p class="card-text">{{ post.Hashtags }}</p>
-                <div class="btn-group">
-                    <button class="btn btn-info">Comment</button>
-                    <button class="btn btn-success">View Post</button>
-                    <button class="btn btn-warning">Share</button>
-                </div>
+              <h5 class="card-title">{{ post.Caption | default('Amazing Post Caption') }}</h5>
+              <p class="card-text">{{ post.Hashtags | default('#example #post #hashtag') }}</p>
+              <div class="btn-group">
+                <button class="btn btn-info">
+                  <i class="bi bi-chat-left-text"></i> Comment
+                </button>
+                <button class="btn btn-success">
+                  <i class="bi bi-eye"></i> View Post
+                </button>
+                <button class="btn btn-warning">
+                  <i class="bi bi-share"></i> Share
+                </button>
+              </div>
             </div>
+          </div>
         </div>
-    </div>
-    {% endfor %}
-</div>
+        {% endfor %}
+      </div>
     </section>
   </main>
 

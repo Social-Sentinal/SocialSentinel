@@ -1,68 +1,86 @@
-# 📊 Sentiments-Based Recommendation System for Instagram
+# SocialSentinel
 
-A Flask-based web application that leverages **AI, NLP, and ML models** to generate, analyze, and recommend optimized social media content such as captions, hashtags, and post layouts.
+SocialSentinel is an intelligent Instagram sentiment analysis and recommendation platform powered by Machine Learning, Natural Language Processing (NLP), and Flask.
 
----
+## 🚀 Features
 
-## 🚀 Project Description
-
-This project is a smart content generation and analysis platform designed for social media managers, marketers, and content creators. It combines natural language processing, sentiment analysis, and machine learning to help users:
-
-* Generate engaging posts
-* Analyze emotional tone
-* Predict sentiment
-* Recommend better content
-* Store user interactions for optimization
-
-The system is modular, interactive, and scalable — capable of API integration, CSV analysis, and visual output like word clouds.
+- **Sentiment Analysis**: Evaluate post text sentiment (Positive, Neutral, Negative) with confidence scores and distribution breakdown using Scikit-Learn TF-IDF + Random Forest.
+- **Emotion Intensity Detection**: Analyze emotional undertones (Joy, Anger, Sadness, Surprise).
+- **Word Cloud Generator**: Generate visual word clouds for analyzed captions.
+- **Content-Based Recommendations**: Recommend relevant posts using Word2Vec embeddings and Cosine Similarity.
+- **Collaborative Filtering Recommendations**: Suggest predicted captions and hashtags based on historical engagement patterns.
+- **Interactive Engine**: Simulate post viewing, liking, sharing, commenting, and tracking user dwell time.
+- **API Dashboard**: View summarized post sentiment metrics and prediction outputs.
 
 ---
 
-## ✅ Core Functionalities
+## 📁 Repository Structure
 
-### 🔹 Post Generation
+```
+SocialSentinel/
+├── app/                        # Main Application Package
+│   ├── config.py               # Path configurations & settings
+│   ├── routes/                 # Flask Blueprints (Modular Handlers)
+│   │   ├── main_routes.py      # Page views (/, engine, sentiments, contact, reports, api)
+│   │   ├── sentiment_routes.py # REST endpoints for sentiment analysis & emotions
+│   │   └── recommend_routes.py # REST endpoints for post recommendations & interaction tracking
+│   ├── services/               # Core Business & Machine Learning Logic
+│   │   ├── sentiment_service.py # TF-IDF & Random Forest classification logic
+│   │   ├── content_service.py   # Word2Vec content similarity service
+│   │   ├── collab_service.py    # Collaborative model evaluation service
+│   │   └── api_service.py       # TextBlob sentiment & API post helpers
+│   └── utils/                  # Shared Utility Modules
+│       ├── data_loader.py       # Centralized model and CSV dataset loaders
+│       ├── text_utils.py        # NLP text cleaning & preprocessing
+│       └── post_generator.py    # Mock social post generator
+├── data/                       # Consolidated Datasets (.csv)
+├── models/                     # Trained ML Models & Vectorizers (.pkl, .model)
+├── notebooks/                  # Experimental Jupyter Notebooks
+├── scripts/                    # Utility & Scraper Scripts
+├── static/                     # CSS, JS, Vendor, and Image Assets
+├── templates/                  # Jinja2 HTML Templates
+├── run.py                      # Flask Application Launcher
+├── requirements.txt            # Python Package Dependencies
+└── README.md                   # Project Documentation
+```
 
-* Automatically generates 20 randomized posts using pre-defined templates or logic.
-* Each post includes a caption, hashtags, and timestamp.
+---
 
-### 🔹 User Interaction Logging
+## 🛠️ Installation & Setup
 
-* Captures how long a user views a post.
-* Saves interactions (caption, hashtag, timestamp, duration) to a `CSV`.
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Social-Sentinal/SocialSentinel.git
+   cd SocialSentinel
+   ```
 
-### 🔹 Recommendation Engine
+2. **Set up a Virtual Environment**:
+   ```bash
+   python -m venv venv
+   # On Windows:
+   venv\Scripts\activate
+   # On Linux/macOS:
+   source venv/bin/activate
+   ```
 
-* Suggests new content based on:
+3. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-  * User input (keywords or sentence)
-  * Word2Vec semantic similarity
-  * Saved post engagement
+4. **Run the Flask Application**:
+   ```bash
+   python run.py
+   ```
+   Open your browser and navigate to `http://127.0.0.1:5000`.
 
-### 🔹 Sentiment & Emotion Analysis
+---
 
-* Predicts sentiment (positive, neutral, negative) using a trained **Random Forest** model.
-* Detects emotions (happy, sad, angry, etc.) from text.
-* Option to generate a **word cloud** from user input.
+## 📖 Key Web Pages
 
-### 🔹 Report Generation
-
-* Analyzes saved post data (`saved_posts.csv`) to:
-
-  * Predict improved captions and hashtags using ML models.
-  * Display AI-generated post recommendations.
-
-### 🔹 API Support
-
-* `/get_pts`: Generates post data from pre-analyzed CSV.
-* `/save_pts`: Saves recommended post data via API for integrations.
-
-### 🔹 Flow Chart
-<img width="12880" height="6448" alt="SocialSentinel" src="https://github.com/user-attachments/assets/553bad9f-8955-4ea2-8b78-1b6d8ed37269" />
-
-### 🔹 Fronted UI
-<img width="1920" height="1020" alt="home" src="https://github.com/user-attachments/assets/6b07b83d-e152-4e8b-9558-724e39609e3d" />
-<img width="1920" height="1020" alt="enginr" src="https://github.com/user-attachments/assets/53aae66a-4dc0-4f66-8e83-4f4dea303080" />
-
-
-
-
+- **Home** (`/`): Overview of the SocialSentinel platform.
+- **Engine** (`/engine.html`): Interactive feed simulating user engagement and recording view duration.
+- **Sentiment Analysis** (`/sentiments.html`): Input custom text to analyze sentiment polarity, confidence score, and emotion intensity.
+- **Content Recommendations** (`/contact.html`): Input topics/keywords to receive personalized post recommendations based on Word2Vec similarity.
+- **Collaborative Recommendations** (`/reports.html`): View predicted captions and hashtags generated by trained ML models based on user activity.
+- **API Dashboard** (`/api.html`): View summarized sentiment scores and engagement predictions.
