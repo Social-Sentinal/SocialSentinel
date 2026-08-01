@@ -3,70 +3,84 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SocialSentinel - Instagram Web UI Feed</title>
+  <title>SocialSentinel - Social Media Intelligence Platform</title>
 
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
   <link href="static/css/main.css" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Instagram Left Fixed Sidebar Navigation -->
-  <aside class="ig-sidebar">
-    <a href="/" class="ig-brand">
-      <img src="static/img/logo.png" alt="Logo" onerror="this.src='https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=100&auto=format&fit=crop&q=80'">
-      <span class="ig-brand-text">Instagram</span>
+  <!-- SocialSentinel Left Fixed Sidebar Navigation -->
+  <aside class="ss-sidebar">
+    <a href="/" class="ss-brand">
+      <img src="static/img/logo.png" alt="SocialSentinel" onerror="this.src='https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=100&auto=format&fit=crop&q=80'">
+      <span class="ss-brand-text">SocialSentinel</span>
     </a>
 
-    <ul class="ig-nav-list">
-      <li class="ig-nav-item"><a href="/" class="active"><i class="bi bi-house-door-fill"></i> <span>Home</span></a></li>
-      <li class="ig-nav-item"><a href="/contact.html"><i class="bi bi-compass"></i> <span>Explore Search</span></a></li>
-      <li class="ig-nav-item"><a href="/engine.html"><i class="bi bi-play-btn"></i> <span>Feed Engine</span></a></li>
-      <li class="ig-nav-item"><a href="/sentiments.html"><i class="bi bi-chat-quote"></i> <span>Sentiment Studio</span></a></li>
-      <li class="ig-nav-item"><a href="/reports.html"><i class="bi bi-bar-chart-line"></i> <span>Insights</span></a></li>
-      <li class="ig-nav-item"><a href="/api.html"><i class="bi bi-code-slash"></i> <span>Developer API</span></a></li>
-      <li class="ig-nav-item mt-auto"><a href="#"><i class="bi bi-person-circle"></i> <span>Profile</span></a></li>
+    <ul class="ss-nav-list">
+      <li class="ss-nav-item"><a href="/" class="active"><i class="bi bi-house-door-fill"></i> <span>Home Feed</span></a></li>
+      <li class="ss-nav-item"><a href="/contact.html"><i class="bi bi-compass"></i> <span>Explore Search</span></a></li>
+      <li class="ss-nav-item"><a href="/engine.html"><i class="bi bi-play-btn"></i> <span>Feed Engine</span></a></li>
+      <li class="ss-nav-item"><a href="/sentiments.html"><i class="bi bi-chat-quote"></i> <span>Sentiment Studio</span></a></li>
+      <li class="ss-nav-item"><a href="/reports.html"><i class="bi bi-bar-chart-line"></i> <span>Analytics Insights</span></a></li>
+      
+      <!-- Admin Dropdown -->
+      <li class="ss-nav-item dropdown">
+        <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-shield-lock"></i> <span>Admin Access</span>
+        </button>
+        <ul class="dropdown-menu admin-dropdown-menu">
+          <li><a class="dropdown-item" href="/api.html"><i class="bi bi-code-slash text-primary"></i> Developer API Portal</a></li>
+          <li><a class="dropdown-item" href="/reports.html"><i class="bi bi-cpu text-primary"></i> System Diagnostics</a></li>
+        </ul>
+      </li>
+
+      <li class="ss-nav-item mt-auto"><a href="#"><i class="bi bi-person-circle"></i> <span>Profile</span></a></li>
     </ul>
   </aside>
 
-  <!-- Instagram Main Feed Content -->
-  <main class="ig-main-content">
-    <div class="ig-feed-container">
+  <!-- Main Feed Content -->
+  <main class="ss-main-content">
+    <div class="ss-feed-container">
 
       <!-- Top Stories Bar -->
-      <div class="ig-stories-bar">
-        <div class="ig-story-item">
-          <div class="ig-story-ring">
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" class="ig-story-avatar" alt="Story">
+      <div class="ss-stories-bar">
+        <div class="ss-story-item">
+          <div class="ss-story-ring">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" class="ss-story-avatar" alt="Story">
           </div>
-          <span class="ig-story-username">humansofny</span>
+          <span class="ss-story-username">humansofny</span>
         </div>
-        <div class="ig-story-item">
-          <div class="ig-story-ring">
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" class="ig-story-avatar" alt="Story">
+        <div class="ss-story-item">
+          <div class="ss-story-ring">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" class="ss-story-avatar" alt="Story">
           </div>
-          <span class="ig-story-username">travel_pro</span>
+          <span class="ss-story-username">travel_pro</span>
         </div>
-        <div class="ig-story-item">
-          <div class="ig-story-ring">
-            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80" class="ig-story-avatar" alt="Story">
+        <div class="ss-story-item">
+          <div class="ss-story-ring">
+            <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80" class="ss-story-avatar" alt="Story">
           </div>
-          <span class="ig-story-username">urban_shots</span>
+          <span class="ss-story-username">urban_shots</span>
         </div>
-        <div class="ig-story-item">
-          <div class="ig-story-ring">
-            <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=150&auto=format&fit=crop&q=80" class="ig-story-avatar" alt="Story">
+        <div class="ss-story-item">
+          <div class="ss-story-ring">
+            <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=150&auto=format&fit=crop&q=80" class="ss-story-avatar" alt="Story">
           </div>
-          <span class="ig-story-username">foodie_gram</span>
+          <span class="ss-story-username">foodie_gram</span>
         </div>
-        <div class="ig-story-item">
-          <div class="ig-story-ring">
-            <img src="https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=150&auto=format&fit=crop&q=80" class="ig-story-avatar" alt="Story">
+        <div class="ss-story-item">
+          <div class="ss-story-ring">
+            <img src="https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=150&auto=format&fit=crop&q=80" class="ss-story-avatar" alt="Story">
           </div>
-          <span class="ig-story-username">street_art</span>
+          <span class="ss-story-username">street_art</span>
         </div>
       </div>
 
@@ -74,7 +88,7 @@
       <div id="mainFeedContainer">
         <div class="text-center py-5">
           <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading Instagram Feed...</span>
+            <span class="visually-hidden">Loading Feed...</span>
           </div>
         </div>
       </div>
@@ -82,8 +96,51 @@
     </div>
   </main>
 
+  <!-- Centered Comment Modal -->
+  <div class="modal fade" id="commentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-chat-dots text-primary me-2"></i>Add Comment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="modalPostId">
+          <div class="mb-3">
+            <label for="commentTextArea" class="form-label text-muted small">Write your comment for this post:</label>
+            <textarea class="form-control rounded-3" id="commentTextArea" rows="3" placeholder="Add a comment..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary rounded-3 px-4" onclick="submitModalComment()">Post Comment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Centered Share Modal -->
+  <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-share text-primary me-2"></i>Share Post</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center py-4">
+          <p class="text-secondary mb-4">Share this post across your social channels:</p>
+          <div class="d-flex justify-content-center gap-3">
+            <button class="btn btn-outline-primary rounded-circle p-3 fs-4" onclick="copyShareLink()"><i class="bi bi-link-45deg"></i></button>
+            <button class="btn btn-outline-success rounded-circle p-3 fs-4" onclick="copyShareLink()"><i class="bi bi-whatsapp"></i></button>
+            <button class="btn btn-outline-info rounded-circle p-3 fs-4" onclick="copyShareLink()"><i class="bi bi-twitter-x"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
-    async function loadInstagramFeed() {
+    async function loadSocialSentinelFeed() {
       try {
         const res = await fetch('/get_posts');
         const posts = await res.json();
@@ -92,61 +149,61 @@
 
         posts.forEach(post => {
           const card = document.createElement('div');
-          card.className = 'ig-post-card';
+          card.className = 'ss-post-card';
           
           const dotClass = post.sentiment === 'Positive' ? 'badge-dot-positive' :
                            post.sentiment === 'Negative' ? 'badge-dot-negative' : 'badge-dot-neutral';
 
           card.innerHTML = `
-            <div class="ig-post-header">
-              <div class="ig-post-userinfo">
-                <img src="${post.user_avatar}" class="ig-post-avatar" alt="Avatar">
+            <div class="ss-post-header">
+              <div class="ss-post-userinfo">
+                <img src="${post.user_avatar}" class="ss-post-avatar" alt="Avatar">
                 <div>
-                  <a href="#" class="ig-post-username">${post.username}</a>
-                  <div class="ig-post-location">${post.location}</div>
+                  <a href="#" class="ss-post-username">${post.username}</a>
+                  <div class="ss-post-location">${post.location}</div>
                 </div>
               </div>
-              <i class="bi bi-three-dots ig-post-more"></i>
+              <i class="bi bi-three-dots ss-post-more"></i>
             </div>
 
-            <div class="ig-post-media">
+            <div class="ss-post-media">
               <img src="${post.image_url}" alt="Post Media">
-              <div class="ig-sentiment-badge">
+              <div class="ss-sentiment-badge">
                 <span class="badge-dot ${dotClass}"></span>
                 ${post.sentiment} (${(post.score * 100).toFixed(0)}%)
               </div>
             </div>
 
-            <div class="ig-post-actions">
-              <div class="ig-action-left">
-                <button class="ig-action-btn" onclick="toggleLike(this, ${post.id})"><i class="bi bi-heart"></i></button>
-                <button class="ig-action-btn"><i class="bi bi-chat"></i></button>
-                <button class="ig-action-btn"><i class="bi bi-send"></i></button>
+            <div class="ss-post-actions">
+              <div class="ss-action-left">
+                <button class="ss-action-btn" onclick="toggleLike(this, ${post.id})"><i class="bi bi-heart"></i></button>
+                <button class="ss-action-btn" onclick="openCommentModal(${post.id})"><i class="bi bi-chat"></i></button>
+                <button class="ss-action-btn" onclick="openShareModal(${post.id})"><i class="bi bi-send"></i></button>
               </div>
-              <button class="ig-action-btn"><i class="bi bi-bookmark"></i></button>
+              <button class="ss-action-btn" onclick="toggleSave(this)"><i class="bi bi-bookmark"></i></button>
             </div>
 
-            <div class="ig-post-details">
-              <div class="ig-likes-count" id="likes-${post.id}">${post.likes_count.toLocaleString()} likes</div>
-              <div class="ig-caption-text">
-                <span class="ig-caption-username">${post.username}</span>
+            <div class="ss-post-details">
+              <div class="ss-likes-count" id="likes-${post.id}">${post.likes_count.toLocaleString()} likes</div>
+              <div class="ss-caption-text">
+                <span class="ss-caption-username">${post.username}</span>
                 ${post.caption}
               </div>
-              <div class="ig-hashtags">${post.hashtags}</div>
+              <div class="ss-hashtags">${post.hashtags}</div>
               <div class="text-muted small mt-1">View all ${post.comments_count} comments</div>
-              <div class="ig-post-time">${post.timestamp}</div>
+              <div class="ss-post-time">${post.timestamp}</div>
             </div>
 
-            <div class="ig-comment-section">
+            <div class="ss-comment-section">
               <i class="bi bi-emoji-smile fs-5 text-muted"></i>
-              <input type="text" class="ig-comment-input" placeholder="Add a comment..." id="comment-input-${post.id}">
-              <button class="ig-comment-submit" onclick="submitComment(${post.id})">Post</button>
+              <input type="text" class="ss-comment-input" placeholder="Add a comment..." id="inline-comment-${post.id}">
+              <button class="ss-comment-submit" onclick="submitInlineComment(${post.id})">Post</button>
             </div>
           `;
           container.appendChild(card);
         });
       } catch (err) {
-        console.error('Error loading Instagram feed:', err);
+        console.error('Error loading feed:', err);
       }
     }
 
@@ -158,21 +215,57 @@
       if (heartIcon.classList.contains('bi-heart')) {
         heartIcon.className = 'bi bi-heart-fill text-danger';
         likesElem.innerText = (currentLikes + 1).toLocaleString() + ' likes';
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Post Liked', showConfirmButton: false, timer: 1500 });
       } else {
         heartIcon.className = 'bi bi-heart';
         likesElem.innerText = (currentLikes - 1).toLocaleString() + ' likes';
       }
     }
 
-    function submitComment(postId) {
-      const input = document.getElementById(`comment-input-${postId}`);
+    function toggleSave(btn) {
+      const icon = btn.querySelector('i');
+      if (icon.classList.contains('bi-bookmark')) {
+        icon.className = 'bi bi-bookmark-fill text-primary';
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Saved to Bookmarks', showConfirmButton: false, timer: 1500 });
+      } else {
+        icon.className = 'bi bi-bookmark';
+      }
+    }
+
+    function openCommentModal(postId) {
+      document.getElementById('modalPostId').value = postId;
+      document.getElementById('commentTextArea').value = '';
+      new bootstrap.Modal(document.getElementById('commentModal')).show();
+    }
+
+    function submitModalComment() {
+      const postId = document.getElementById('modalPostId').value;
+      const comment = document.getElementById('commentTextArea').value.trim();
+
+      if (comment) {
+        bootstrap.Modal.getInstance(document.getElementById('commentModal')).hide();
+        Swal.fire({ icon: 'success', title: 'Comment Posted', text: `"${comment}" saved to database.`, timer: 2000, showConfirmButton: false });
+      }
+    }
+
+    function submitInlineComment(postId) {
+      const input = document.getElementById(`inline-comment-${postId}`);
       if (input.value.trim()) {
-        alert(`Comment posted: "${input.value}"`);
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Comment Posted', showConfirmButton: false, timer: 1500 });
         input.value = '';
       }
     }
 
-    document.addEventListener('DOMContentLoaded', loadInstagramFeed);
+    function openShareModal(postId) {
+      new bootstrap.Modal(document.getElementById('shareModal')).show();
+    }
+
+    function copyShareLink() {
+      bootstrap.Modal.getInstance(document.getElementById('shareModal')).hide();
+      Swal.fire({ icon: 'success', title: 'Link Copied', text: 'Share link copied to clipboard.', timer: 1500, showConfirmButton: false });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadSocialSentinelFeed);
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

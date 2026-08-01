@@ -3,38 +3,51 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SocialSentinel - Instagram Feed Engine</title>
+  <title>SocialSentinel - Feed Engine</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link href="static/css/main.css" rel="stylesheet">
 </head>
 <body>
 
   <!-- Sidebar -->
-  <aside class="ig-sidebar">
-    <a href="/" class="ig-brand">
+  <aside class="ss-sidebar">
+    <a href="/" class="ss-brand">
       <img src="static/img/logo.png" alt="Logo" onerror="this.src='https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=100&auto=format&fit=crop&q=80'">
-      <span class="ig-brand-text">Instagram</span>
+      <span class="ss-brand-text">SocialSentinel</span>
     </a>
 
-    <ul class="ig-nav-list">
-      <li class="ig-nav-item"><a href="/"><i class="bi bi-house-door"></i> <span>Home</span></a></li>
-      <li class="ig-nav-item"><a href="/contact.html"><i class="bi bi-compass"></i> <span>Explore Search</span></a></li>
-      <li class="ig-nav-item"><a href="/engine.html" class="active"><i class="bi bi-play-btn-fill"></i> <span>Feed Engine</span></a></li>
-      <li class="ig-nav-item"><a href="/sentiments.html"><i class="bi bi-chat-quote"></i> <span>Sentiment Studio</span></a></li>
-      <li class="ig-nav-item"><a href="/reports.html"><i class="bi bi-bar-chart-line"></i> <span>Insights</span></a></li>
-      <li class="ig-nav-item"><a href="/api.html"><i class="bi bi-code-slash"></i> <span>Developer API</span></a></li>
-      <li class="ig-nav-item mt-auto"><a href="#"><i class="bi bi-person-circle"></i> <span>Profile</span></a></li>
+    <ul class="ss-nav-list">
+      <li class="ss-nav-item"><a href="/"><i class="bi bi-house-door"></i> <span>Home Feed</span></a></li>
+      <li class="ss-nav-item"><a href="/contact.html"><i class="bi bi-compass"></i> <span>Explore Search</span></a></li>
+      <li class="ss-nav-item"><a href="/engine.html" class="active"><i class="bi bi-play-btn-fill"></i> <span>Feed Engine</span></a></li>
+      <li class="ss-nav-item"><a href="/sentiments.html"><i class="bi bi-chat-quote"></i> <span>Sentiment Studio</span></a></li>
+      <li class="ss-nav-item"><a href="/reports.html"><i class="bi bi-bar-chart-line"></i> <span>Analytics Insights</span></a></li>
+      
+      <!-- Admin Dropdown -->
+      <li class="ss-nav-item dropdown">
+        <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-shield-lock"></i> <span>Admin Access</span>
+        </button>
+        <ul class="dropdown-menu admin-dropdown-menu">
+          <li><a class="dropdown-item" href="/api.html"><i class="bi bi-code-slash text-primary"></i> Developer API Portal</a></li>
+          <li><a class="dropdown-item" href="/reports.html"><i class="bi bi-cpu text-primary"></i> System Diagnostics</a></li>
+        </ul>
+      </li>
+
+      <li class="ss-nav-item mt-auto"><a href="#"><i class="bi bi-person-circle"></i> <span>Profile</span></a></li>
     </ul>
   </aside>
 
   <!-- Feed Engine -->
-  <main class="ig-main-content">
-    <div class="ig-feed-container">
+  <main class="ss-main-content">
+    <div class="ss-feed-container">
       <div class="text-center mb-4">
-        <h3 class="fw-bold">Instagram Interactive Feed Engine</h3>
+        <h3 class="fw-bold">SocialSentinel Interactive Feed Engine</h3>
         <p class="text-secondary small">Real-time dwell duration tracking & engagement saved directly to SQLite Database.</p>
       </div>
 
@@ -62,44 +75,44 @@
           viewTimers[post.id] = Date.now();
 
           const card = document.createElement('div');
-          card.className = 'ig-post-card';
+          card.className = 'ss-post-card';
           card.innerHTML = `
-            <div class="ig-post-header">
-              <div class="ig-post-userinfo">
-                <img src="${post.user_avatar}" class="ig-post-avatar" alt="Avatar">
+            <div class="ss-post-header">
+              <div class="ss-post-userinfo">
+                <img src="${post.user_avatar}" class="ss-post-avatar" alt="Avatar">
                 <div>
-                  <a href="#" class="ig-post-username">${post.username}</a>
-                  <div class="ig-post-location">${post.location}</div>
+                  <a href="#" class="ss-post-username">${post.username}</a>
+                  <div class="ss-post-location">${post.location}</div>
                 </div>
               </div>
               <span class="badge bg-light text-dark border">Engine Tracking</span>
             </div>
 
-            <div class="ig-post-media">
+            <div class="ss-post-media">
               <img src="${post.image_url}" alt="Post Media">
-              <div class="ig-sentiment-badge">
+              <div class="ss-sentiment-badge">
                 <span class="badge-dot badge-dot-positive"></span>
                 ${post.sentiment} (${(post.score * 100).toFixed(0)}%)
               </div>
             </div>
 
-            <div class="ig-post-actions">
-              <div class="ig-action-left">
-                <button class="ig-action-btn" onclick="saveEngineInteraction(${post.id}, 'like', '${post.caption}', '${post.hashtags}')"><i class="bi bi-heart-fill text-danger"></i></button>
-                <button class="ig-action-btn" onclick="saveEngineComment(${post.id}, '${post.caption}', '${post.hashtags}')"><i class="bi bi-chat"></i></button>
-                <button class="ig-action-btn" onclick="saveEngineInteraction(${post.id}, 'share', '${post.caption}', '${post.hashtags}')"><i class="bi bi-send"></i></button>
+            <div class="ss-post-actions">
+              <div class="ss-action-left">
+                <button class="ss-action-btn" onclick="saveEngineInteraction(${post.id}, 'like', '${post.caption}', '${post.hashtags}')"><i class="bi bi-heart-fill text-danger"></i></button>
+                <button class="ss-action-btn" onclick="saveEngineCommentPrompt(${post.id}, '${post.caption}', '${post.hashtags}')"><i class="bi bi-chat"></i></button>
+                <button class="ss-action-btn" onclick="saveEngineInteraction(${post.id}, 'share', '${post.caption}', '${post.hashtags}')"><i class="bi bi-send"></i></button>
               </div>
-              <button class="ig-action-btn"><i class="bi bi-bookmark"></i></button>
+              <button class="ss-action-btn"><i class="bi bi-bookmark"></i></button>
             </div>
 
-            <div class="ig-post-details">
-              <div class="ig-likes-count">${post.likes_count.toLocaleString()} likes</div>
-              <div class="ig-caption-text">
-                <span class="ig-caption-username">${post.username}</span>
+            <div class="ss-post-details">
+              <div class="ss-likes-count">${post.likes_count.toLocaleString()} likes</div>
+              <div class="ss-caption-text">
+                <span class="ss-caption-username">${post.username}</span>
                 ${post.caption}
               </div>
-              <div class="ig-hashtags">${post.hashtags}</div>
-              <div class="ig-post-time">${post.timestamp}</div>
+              <div class="ss-hashtags">${post.hashtags}</div>
+              <div class="ss-post-time">${post.timestamp}</div>
             </div>
           `;
           container.appendChild(card);
@@ -111,7 +124,7 @@
 
     async function saveEngineInteraction(postId, action, caption, hashtags) {
       const duration = (Date.now() - (viewTimers[postId] || Date.now())) / 1000;
-      const res = await fetch('/save_post', {
+      await fetch('/save_post', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -123,26 +136,47 @@
           shared: action === 'share'
         })
       });
-      alert(`Action saved to Database! (${action.toUpperCase()}) - View Dwell Time: ${duration.toFixed(1)}s`);
+
+      Swal.fire({
+        icon: 'success',
+        title: `${action.toUpperCase()} Recorded!`,
+        text: `Interaction saved to database. View duration: ${duration.toFixed(1)}s`,
+        timer: 2000,
+        showConfirmButton: false
+      });
     }
 
-    async function saveEngineComment(postId, caption, hashtags) {
-      const comment = prompt("Enter your comment:");
-      if (!comment) return;
-      const duration = (Date.now() - (viewTimers[postId] || Date.now())) / 1000;
-
-      await fetch('/save_post', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: postId,
-          caption: caption,
-          hashtags: hashtags,
-          duration: duration,
-          comment: comment
-        })
+    async function saveEngineCommentPrompt(postId, caption, hashtags) {
+      const { value: comment } = await Swal.fire({
+        title: 'Add a Comment',
+        input: 'textarea',
+        inputPlaceholder: 'Type your comment here...',
+        showCancelButton: true,
+        confirmButtonText: 'Submit Comment'
       });
-      alert(`Comment saved to Database: "${comment}"`);
+
+      if (comment) {
+        const duration = (Date.now() - (viewTimers[postId] || Date.now())) / 1000;
+        await fetch('/save_post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: postId,
+            caption: caption,
+            hashtags: hashtags,
+            duration: duration,
+            comment: comment
+          })
+        });
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Comment Saved!',
+          text: `"${comment}" recorded in database.`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
     }
 
     document.addEventListener('DOMContentLoaded', loadEngineFeed);
