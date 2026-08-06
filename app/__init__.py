@@ -1,47 +1,61 @@
-from flask import Flask, request
-from app.config import Config, DATA_DIR, STATIC_DIR, TEMPLATES_DIR
+import logging
+import os
+from flask import Flask, request, send_from_directory
+from app.config import Config, DATA_DIR, FRONTEND_DIST_DIR, STATIC_DIR
 from app.extensions import db
 
 
 def create_app(config_class=Config) -> Flask:
+    dist_dir = str(FRONTEND_DIST_DIR) if FRONTEND_DIST_DIR.exists() else str(STATIC_DIR)
+
     app = Flask(
         __name__,
-        template_folder=str(TEMPLATES_DIR),
-        static_folder=str(STATIC_DIR)
+        static_folder=dist_dir,
+        static_url_path=""
     )
     app.config.from_object(config_class)
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     db.init_app(app)
 
-    # Register Blueprints
-    from app.routes.main_routes import main_bp
-    from app.routes.sentiment_routes import sentiment_bp
+    # Register Modern API Blueprint
+    from app.routes.api_routes import api_bp
     from app.routes.recommend_routes import recommend_bp
+    from app.routes.sentiment_routes import sentiment_bp
 
-    app.register_blueprint(main_bp)
-    app.register_blueprint(sentiment_bp)
+    app.register_blueprint(api_bp)
     app.register_blueprint(recommend_bp)
+    app.register_blueprint(sentiment_bp)
 
     # Database Initialization & Real Content Seeding
     with app.app_context():
         db.create_all()
         seed_database()
 
-    # Register Error Handlers
+    # Serve React Single Page Application (SPA Fallback)
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_spa(path):
+        if path.startswith("api/"):
+            return {"status": "error", "message": "Resource Not Found"}, 404
+
+        target_file = FRONTEND_DIST_DIR / path
+        if path != "" and target_file.exists():
+            return send_from_directory(str(FRONTEND_DIST_DIR), path)
+        
+        # Fallback to React index.html
+        if (FRONTEND_DIST_DIR / "index.html").exists():
+            return send_from_directory(str(FRONTEND_DIST_DIR), "index.html")
+
+        return "<h1>SocialSentinel Backend Running</h1><p>Please build the React frontend: <code>cd frontend && npm run build</code></p>", 200
+
+    # Error Handlers
     @app.errorhandler(500)
     def internal_server_error(e):
-        import logging
         logging.exception("An internal server error occurred: %s", e)
         if request.path.startswith("/api/"):
             return {"status": "error", "message": "Internal Server Error"}, 500
-        return "<h1>500 Internal Server Error</h1><p>An unexpected error occurred on the server.</p>", 500
-
-    @app.errorhandler(404)
-    def page_not_found(e):
-        if request.path.startswith("/api/"):
-            return {"status": "error", "message": "Resource Not Found"}, 404
-        return "<h1>404 Not Found</h1><p>The requested URL was not found on the server.</p>", 404
+        return "<h1>500 Internal Server Error</h1>", 500
 
     return app
 

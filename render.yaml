@@ -7,6 +7,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.4
+      - key: NODE_VERSION
+        value: 20.11.1
       - key: SECRET_KEY
         generateValue: true
       - key: APIFY_API_TOKEN
