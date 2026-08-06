@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, RefreshCw, Radar, Sparkles } from 'lucide-react';
+import { Search, Filter, RefreshCw, Activity, Heart, Eye, TrendingUp, Sparkles } from 'lucide-react';
 import PostCard from '../components/PostCard';
-import { fetchPosts } from '../services/api';
+import { fetchPosts, fetchAnalyticsOverview } from '../services/api';
 
 export default function FeedPage() {
   const [posts, setPosts] = useState([]);
@@ -9,17 +9,24 @@ export default function FeedPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sentimentFilter, setSentimentFilter] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
+  const [analytics, setAnalytics] = useState(null);
 
   const loadPosts = async () => {
     setIsLoading(true);
     try {
-      const res = await fetchPosts();
-      if (res.status === 'success' && Array.isArray(res.data)) {
-        setPosts(res.data);
-        setFilteredPosts(res.data);
+      const [postRes, analyticsRes] = await Promise.all([
+        fetchPosts(),
+        fetchAnalyticsOverview()
+      ]);
+      if (postRes.status === 'success' && Array.isArray(postRes.data)) {
+        setPosts(postRes.data);
+        setFilteredPosts(postRes.data);
+      }
+      if (analyticsRes.status === 'success') {
+        setAnalytics(analyticsRes.data);
       }
     } catch (err) {
-      console.error('Failed to load posts:', err);
+      console.error('Failed to load feed:', err);
     } finally {
       setIsLoading(false);
     }
@@ -32,12 +39,10 @@ export default function FeedPage() {
   useEffect(() => {
     let result = posts;
 
-    // Apply Sentiment Filter
     if (sentimentFilter !== 'ALL') {
       result = result.filter((p) => (p.sentiment || '').toUpperCase() === sentimentFilter);
     }
 
-    // Apply Search Query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -52,93 +57,154 @@ export default function FeedPage() {
   }, [searchQuery, sentimentFilter, posts]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Hero Banner Header */}
-      <div className="glass-card" style={{ padding: '32px 28px', background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%)', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ maxWidth: '700px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: 'var(--radius-full)', background: 'rgba(139, 92, 246, 0.2)', border: '1px solid rgba(139, 92, 246, 0.4)', fontSize: '0.78rem', color: '#A78BFA', fontWeight: 600, marginBottom: '12px' }}>
-            <Sparkles size={14} /> Real-Time Social Media Sentinel
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr',
+      gap: '32px',
+      maxWidth: '1000px',
+      margin: '0 auto',
+    }} className="feed-layout">
+
+      {/* Main Social Feed Column */}
+      <div style={{ maxWidth: '600px', width: '100%', margin: '0 auto' }}>
+        {/* Compact Search & Filter Toolbar */}
+        <div className="insta-card" style={{ padding: '12px 16px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Search Input */}
+          <div style={{ position: 'relative', width: '100%' }}>
+            <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+            <input 
+              type="text" 
+              placeholder="Search posts, users, #hashtags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input-field"
+              style={{ paddingLeft: '38px', fontSize: '0.85rem' }}
+            />
           </div>
-          <h1 style={{ fontSize: '2.2rem', fontWeight: 800, marginBottom: '12px' }} className="gradient-text">
-            Social Intelligence & Sentiment Radar
-          </h1>
-          <p style={{ fontSize: '1rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-            Monitor real-time Instagram dataset posts, analyze automated NLP sentiment tags, track dwell time, and explore AI recommendations.
-          </p>
-        </div>
-      </div>
 
-      {/* Filter & Search Toolbar */}
-      <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-        {/* Search Bar */}
-        <div style={{ position: 'relative', flex: '1 1 300px', minWidth: '240px' }}>
-          <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-          <input 
-            type="text" 
-            placeholder="Search captions, usernames, or #hashtags..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="input-field"
-            style={{ paddingLeft: '42px' }}
-          />
-        </div>
+          {/* Sentiment Filter Chips */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', overflowX: 'auto' }}>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {['ALL', 'POSITIVE', 'NEUTRAL', 'NEGATIVE'].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setSentimentFilter(filter)}
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    background: sentimentFilter === filter ? 'var(--primary)' : 'rgba(255, 255, 255, 0.05)',
+                    color: sentimentFilter === filter ? '#FFFFFF' : 'var(--text-muted)',
+                    transition: 'var(--transition-fast)'
+                  }}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
 
-        {/* Sentiment Category Filters */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Filter size={14} /> Filter:
-          </span>
-          {['ALL', 'POSITIVE', 'NEUTRAL', 'NEGATIVE'].map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setSentimentFilter(filter)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                background: sentimentFilter === filter ? 'rgba(139, 92, 246, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                color: sentimentFilter === filter ? '#FFFFFF' : 'var(--text-muted)',
-                border: sentimentFilter === filter ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid var(--border-glass)',
-                transition: 'var(--transition-fast)'
-              }}
+            <button 
+              onClick={loadPosts} 
+              className="btn-icon" 
+              style={{ width: 28, height: 28 }}
+              title="Refresh"
             >
-              {filter}
+              <RefreshCw size={14} />
             </button>
-          ))}
-
-          <button 
-            onClick={loadPosts} 
-            className="btn-icon" 
-            title="Refresh Feed"
-            style={{ marginLeft: '8px' }}
-          >
-            <RefreshCw size={18} />
-          </button>
+          </div>
         </div>
+
+        {/* Post Feed List */}
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+            Loading social stream...
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="insta-card" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            No posts found for your criteria.
+          </div>
+        ) : (
+          filteredPosts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))
+        )}
       </div>
 
-      {/* Post Grid */}
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
-          <RefreshCw size={32} className="spin" style={{ animation: 'spin 1s linear infinite', marginBottom: '12px' }} />
-          <p>Analyzing social intelligence stream...</p>
+      {/* Right Sidebar (Desktop Insights Panel like Instagram) */}
+      <div className="sidebar-column" style={{ width: '320px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* User Account / System Card */}
+        <div className="insta-card" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6, #06B6D4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Activity size={22} color="#FFF" />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#FFF' }}>SocialSentinel AI</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Automated Radar Active</div>
+          </div>
         </div>
-      ) : filteredPosts.length === 0 ? (
-        <div className="glass-card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-          <p style={{ fontSize: '1.1rem', marginBottom: '8px' }}>No posts matched your criteria.</p>
-          <p style={{ fontSize: '0.85rem' }}>Try searching for another keyword or clearing sentiment filters.</p>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
-          {filteredPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
+
+        {/* Quick Platform Metrics */}
+        {analytics && (
+          <div className="insta-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Platform Activity
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Total Feed Posts</span>
+              <span style={{ fontWeight: 700, color: '#FFF' }}>{analytics.total_posts}</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Positive Sentiment</span>
+              <span style={{ fontWeight: 700, color: '#34D399' }}>{analytics.positive_percentage}%</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Total Impressions</span>
+              <span style={{ fontWeight: 700, color: '#06B6D4' }}>{(analytics.total_views || 0).toLocaleString()}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Top Trending Hashtags */}
+        <div className="insta-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Trending Hashtags
+          </div>
+
+          {(analytics?.top_hashtags || [
+            { hashtag: '#adventure', count: 14 },
+            { hashtag: '#nature', count: 12 },
+            { hashtag: '#morning', count: 9 },
+            { hashtag: '#coffee', count: 8 },
+          ]).map((h, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem' }}>
+              <span style={{ color: '#06B6D4', fontWeight: 600 }}>{h.hashtag}</span>
+              <span style={{ color: 'var(--text-dim)' }}>{h.count} posts</span>
+            </div>
           ))}
         </div>
-      )}
+      </div>
 
       <style>{`
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @media (min-width: 900px) {
+          .feed-layout {
+            grid-template-columns: 1fr 320px !important;
+          }
+          .sidebar-column {
+            display: flex !important;
+          }
+        }
+        @media (max-width: 899px) {
+          .feed-layout {
+            grid-template-columns: 1fr !important;
+          }
+          .sidebar-column {
+            display: none !important;
+          }
+        }
       `}</style>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, Clock, Sparkles, Send } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, Send, Sparkles } from 'lucide-react';
 import { toggleLikePost, addCommentToPost, logUserInteraction } from '../services/api';
 
 export default function PostCard({ post }) {
@@ -10,22 +10,8 @@ export default function PostCard({ post }) {
   const [comments, setComments] = useState(post.comments_list || []);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [viewTime, setViewTime] = useState(0);
 
-  const timerRef = useRef(null);
-
-  // Track dwell time for user interactions
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setViewTime((prev) => prev + 1);
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
-
-  // Handle Like toggle
+  // Like Toggle
   const handleLike = async () => {
     const nextState = !liked;
     setLiked(nextState);
@@ -38,7 +24,7 @@ export default function PostCard({ post }) {
     }
   };
 
-  // Handle Save toggle
+  // Save Toggle
   const handleSave = async () => {
     const nextState = !saved;
     setSaved(nextState);
@@ -46,7 +32,6 @@ export default function PostCard({ post }) {
       await logUserInteraction({
         post_id: post.id,
         saved: nextState,
-        duration: viewTime,
         caption: post.caption,
         hashtags: post.hashtags,
       });
@@ -55,7 +40,7 @@ export default function PostCard({ post }) {
     }
   };
 
-  // Handle Submit Comment
+  // Submit Comment
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!commentInput.trim() || isSubmittingComment) return;
@@ -76,36 +61,36 @@ export default function PostCard({ post }) {
     }
   };
 
-  // Helper for Sentiment class and label
+  // Sentiment Pill Helper
   const getSentimentBadge = (sentiment) => {
     const s = (sentiment || '').toLowerCase();
     if (s === 'positive') {
-      return <span className="badge badge-positive">Positive {post.score ? `(${Math.round(post.score * 100)}%)` : ''}</span>;
+      return <span className="badge badge-positive">Positive</span>;
     } else if (s === 'negative') {
-      return <span className="badge badge-negative">Negative {post.score ? `(${Math.round(post.score * 100)}%)` : ''}</span>;
+      return <span className="badge badge-negative">Negative</span>;
     }
-    return <span className="badge badge-neutral">Neutral {post.score ? `(${Math.round(post.score * 100)}%)` : ''}</span>;
+    return <span className="badge badge-neutral">Neutral</span>;
   };
 
   return (
-    <div className="glass-card-interactive" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      {/* Header Info */}
-      <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-glass)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div className="insta-card" style={{ marginBottom: '24px', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <img 
             src={post.user_avatar} 
             alt={post.username}
-            style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(139, 92, 246, 0.4)' }} 
+            style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255, 255, 255, 0.15)' }} 
           />
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#FFF' }}>
-                @{post.username}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#FFF' }}>
+                {post.username}
               </span>
-              {post.is_verified && <CheckCircle2 size={16} color="#06B6D4" />}
+              {post.is_verified && <CheckCircle2 size={14} color="#06B6D4" />}
             </div>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
-              {post.location} • {post.timestamp}
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              {post.location}
             </span>
           </div>
         </div>
@@ -115,135 +100,110 @@ export default function PostCard({ post }) {
         </div>
       </div>
 
-      {/* Media Content */}
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/10', backgroundColor: '#000', overflow: 'hidden' }}>
+      {/* Post Image */}
+      <div style={{ width: '100%', aspectRatio: '1/1', backgroundColor: '#000', overflow: 'hidden' }}>
         <img 
           src={post.image_url} 
           alt="Post content" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           loading="lazy"
         />
-        <div style={{
-          position: 'absolute',
-          bottom: 12,
-          right: 12,
-          padding: '4px 10px',
-          background: 'rgba(0, 0, 0, 0.65)',
-          backdropFilter: 'blur(8px)',
-          borderRadius: 'var(--radius-full)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          fontSize: '0.72rem',
-          color: 'var(--text-muted)'
-        }}>
-          <Clock size={12} color="#06B6D4" />
-          <span>Dwell: {viewTime}s</span>
-        </div>
       </div>
 
-      {/* Card Content & Action Bar */}
-      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1 }}>
+      {/* Action Bar */}
+      <div style={{ padding: '12px 16px 8px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button 
               onClick={handleLike}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', color: liked ? '#F43F5E' : 'var(--text-muted)', transition: 'var(--transition-fast)' }}
+              style={{ color: liked ? '#F43F5E' : '#FFF', transition: 'var(--transition-fast)' }}
             >
-              <Heart size={22} fill={liked ? '#F43F5E' : 'none'} color={liked ? '#F43F5E' : 'currentColor'} />
-              <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{likesCount}</span>
+              <Heart size={24} fill={liked ? '#F43F5E' : 'none'} color={liked ? '#F43F5E' : 'currentColor'} />
             </button>
 
             <button 
               onClick={() => setCommentsOpen(!commentsOpen)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', color: commentsOpen ? '#A78BFA' : 'var(--text-muted)' }}
+              style={{ color: '#FFF' }}
             >
-              <MessageCircle size={22} color={commentsOpen ? '#A78BFA' : 'currentColor'} />
-              <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{comments.length || post.comments_count}</span>
+              <MessageCircle size={24} />
             </button>
 
             <button 
-              style={{ color: 'var(--text-muted)' }}
-              onClick={() => alert(`Shared post link: ${post.url || 'https://instagram.com'}`)}
+              style={{ color: '#FFF' }}
+              onClick={() => alert(`Shared post: ${post.url || 'https://instagram.com'}`)}
             >
-              <Share2 size={20} />
+              <Share2 size={22} />
             </button>
           </div>
 
           <button 
             onClick={handleSave}
-            style={{ color: saved ? '#06B6D4' : 'var(--text-muted)' }}
+            style={{ color: saved ? '#06B6D4' : '#FFF' }}
           >
-            <Bookmark size={22} fill={saved ? '#06B6D4' : 'none'} />
+            <Bookmark size={24} fill={saved ? '#06B6D4' : 'none'} />
           </button>
         </div>
 
-        {/* Caption & Hashtags */}
-        <div>
-          <p style={{ fontSize: '0.92rem', color: '#E2E8F0', lineHeight: 1.5, marginBottom: '6px' }}>
-            {post.caption}
-          </p>
+        {/* Likes Count */}
+        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#FFF' }}>
+          {likesCount.toLocaleString()} likes
+        </div>
+
+        {/* Caption */}
+        <div style={{ fontSize: '0.88rem', color: '#E2E8F0', lineHeight: 1.45 }}>
+          <span style={{ fontWeight: 700, color: '#FFF', marginRight: '6px' }}>{post.username}</span>
+          {post.caption}
           {post.hashtags && (
-            <p style={{ fontSize: '0.82rem', color: '#06B6D4', fontWeight: 500 }}>
+            <div style={{ fontSize: '0.82rem', color: '#06B6D4', fontWeight: 500, marginTop: '4px' }}>
               {post.hashtags}
-            </p>
+            </div>
           )}
         </div>
 
-        {/* Prediction Insights Note */}
-        {post.prediction && (
-          <div style={{
-            padding: '8px 12px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px dashed var(--border-glass)',
-            fontSize: '0.78rem',
-            color: 'var(--text-muted)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <Sparkles size={14} color="#A78BFA" />
-            <span><strong>ML Prediction:</strong> {post.prediction}</span>
-          </div>
-        )}
+        {/* View Comments Toggle */}
+        <button 
+          onClick={() => setCommentsOpen(!commentsOpen)}
+          style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'left', marginTop: '2px' }}
+        >
+          View all {comments.length || post.comments_count} comments
+        </button>
 
-        {/* Comment Section Drawer */}
+        {/* Comment Drawer */}
         {commentsOpen && (
-          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-glass)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '4px' }}>
-              {comments.length === 0 ? (
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>No comments yet. Be the first to comment!</span>
-              ) : (
-                comments.map((c, i) => (
-                  <div key={c.id || i} style={{ display: 'flex', gap: '8px', fontSize: '0.84rem' }}>
-                    <span style={{ fontWeight: 700, color: '#A78BFA' }}>@{c.username || 'user'}:</span>
-                    <span style={{ color: 'var(--text-main)', flex: 1 }}>{c.text}</span>
-                  </div>
-                ))
-              )}
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ maxHeight: '140px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {comments.map((c, i) => (
+                <div key={c.id || i} style={{ fontSize: '0.82rem' }}>
+                  <span style={{ fontWeight: 700, color: '#A78BFA', marginRight: '6px' }}>@{c.username}:</span>
+                  <span style={{ color: 'var(--text-main)' }}>{c.text}</span>
+                </div>
+              ))}
             </div>
-
-            <form onSubmit={handleCommentSubmit} style={{ display: 'flex', gap: '8px' }}>
-              <input 
-                type="text" 
-                placeholder="Add a comment..."
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
-                className="input-field"
-                style={{ padding: '8px 12px', fontSize: '0.85rem' }}
-              />
-              <button 
-                type="submit" 
-                className="btn-primary" 
-                style={{ padding: '8px 14px' }}
-                disabled={isSubmittingComment}
-              >
-                <Send size={16} />
-              </button>
-            </form>
           </div>
         )}
+
+        {/* Inline Comment Input Form */}
+        <form onSubmit={handleCommentSubmit} style={{ display: 'flex', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+          <input 
+            type="text" 
+            placeholder="Add a comment..."
+            value={commentInput}
+            onChange={(e) => setCommentInput(e.target.value)}
+            style={{
+              flex: 1,
+              background: 'transparent',
+              border: 'none',
+              color: '#FFF',
+              fontSize: '0.84rem',
+              outline: 'none',
+            }}
+          />
+          {commentInput.trim() && (
+            <button type="submit" style={{ color: '#8B5CF6', fontWeight: 700, fontSize: '0.84rem' }}>
+              Post
+            </button>
+          )}
+        </form>
       </div>
     </div>
   );
