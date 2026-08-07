@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, Send, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, UserCheck } from 'lucide-react';
 import { toggleLikePost, addCommentToPost, logUserInteraction } from '../services/api';
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, onOpenUser, onInspectPost }) {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
   const [saved, setSaved] = useState(false);
@@ -10,6 +10,12 @@ export default function PostCard({ post }) {
   const [comments, setComments] = useState(post.comments_list || []);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  const triggerInspect = () => {
+    if (onInspectPost) {
+      onInspectPost(post);
+    }
+  };
 
   // Like Toggle
   const handleLike = async () => {
@@ -61,6 +67,12 @@ export default function PostCard({ post }) {
     }
   };
 
+  const triggerUserModal = () => {
+    if (onOpenUser && post.username) {
+      onOpenUser(post.username);
+    }
+  };
+
   // Sentiment Pill Helper
   const getSentimentBadge = (sentiment) => {
     const s = (sentiment || '').toLowerCase();
@@ -76,38 +88,73 @@ export default function PostCard({ post }) {
     <div className="insta-card" style={{ marginBottom: '24px', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div 
+          onClick={triggerUserModal}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+          title="Click to view real Instagram user details"
+        >
           <img 
             src={post.user_avatar} 
             alt={post.username}
-            style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255, 255, 255, 0.15)' }} 
+            style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #8B5CF6' }} 
           />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#FFF' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-main)' }}>
                 {post.username}
               </span>
-              {post.is_verified && <CheckCircle2 size={14} color="#06B6D4" />}
+              {post.is_verified && <CheckCircle2 size={14} color="#3B82F6" />}
             </div>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              {post.location}
+              {post.location || 'New York, NY'} • {post.follower_count ? `${(post.follower_count / 1000).toFixed(0)}k followers` : 'Verified Creator'}
             </span>
           </div>
         </div>
 
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {post.recommendation_reason && (
+            <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>
+              {post.recommendation_reason}
+            </span>
+          )}
           {getSentimentBadge(post.sentiment)}
         </div>
       </div>
 
-      {/* Post Image */}
-      <div style={{ width: '100%', aspectRatio: '1/1', backgroundColor: '#000', overflow: 'hidden' }}>
+      {/* Post Image with Click to Inspect Overlay */}
+      <div 
+        className="post-media-container" 
+        onClick={triggerInspect} 
+        style={{ cursor: 'pointer', position: 'relative' }}
+        title="Click post to open Reel player & AI NLP Content Extraction"
+      >
         <img 
           src={post.image_url} 
           alt="Post content" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           loading="lazy"
         />
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 40%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <div style={{
+            width: 48,
+            height: 48,
+            borderRadius: '50%',
+            background: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+          }}>
+            <div style={{ width: 0, height: 0, borderTop: '8px solid transparent', borderBottom: '8px solid transparent', borderLeft: '14px solid #FFF', marginLeft: '3px' }} />
+          </div>
+        </div>
       </div>
 
       {/* Action Bar */}
@@ -116,20 +163,20 @@ export default function PostCard({ post }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button 
               onClick={handleLike}
-              style={{ color: liked ? '#F43F5E' : '#FFF', transition: 'var(--transition-fast)' }}
+              style={{ color: liked ? '#F43F5E' : 'var(--text-main)', transition: 'var(--transition-fast)' }}
             >
               <Heart size={24} fill={liked ? '#F43F5E' : 'none'} color={liked ? '#F43F5E' : 'currentColor'} />
             </button>
 
             <button 
               onClick={() => setCommentsOpen(!commentsOpen)}
-              style={{ color: '#FFF' }}
+              style={{ color: 'var(--text-main)' }}
             >
               <MessageCircle size={24} />
             </button>
 
             <button 
-              style={{ color: '#FFF' }}
+              style={{ color: 'var(--text-main)' }}
               onClick={() => alert(`Shared post: ${post.url || 'https://instagram.com'}`)}
             >
               <Share2 size={22} />
@@ -138,23 +185,28 @@ export default function PostCard({ post }) {
 
           <button 
             onClick={handleSave}
-            style={{ color: saved ? '#06B6D4' : '#FFF' }}
+            style={{ color: saved ? '#3B82F6' : 'var(--text-main)' }}
           >
-            <Bookmark size={24} fill={saved ? '#06B6D4' : 'none'} />
+            <Bookmark size={24} fill={saved ? '#3B82F6' : 'none'} />
           </button>
         </div>
 
         {/* Likes Count */}
-        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#FFF' }}>
+        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)' }}>
           {likesCount.toLocaleString()} likes
         </div>
 
         {/* Caption */}
-        <div style={{ fontSize: '0.88rem', color: '#E2E8F0', lineHeight: 1.45 }}>
-          <span style={{ fontWeight: 700, color: '#FFF', marginRight: '6px' }}>{post.username}</span>
+        <div style={{ fontSize: '0.88rem', color: 'var(--text-main)', lineHeight: 1.45 }}>
+          <span 
+            onClick={triggerUserModal}
+            style={{ fontWeight: 700, color: 'var(--text-main)', marginRight: '6px', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            {post.username}
+          </span>
           {post.caption}
           {post.hashtags && (
-            <div style={{ fontSize: '0.82rem', color: '#06B6D4', fontWeight: 500, marginTop: '4px' }}>
+            <div style={{ fontSize: '0.82rem', color: '#3B82F6', fontWeight: 600, marginTop: '4px' }}>
               {post.hashtags}
             </div>
           )}
@@ -174,7 +226,7 @@ export default function PostCard({ post }) {
             <div style={{ maxHeight: '140px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {comments.map((c, i) => (
                 <div key={c.id || i} style={{ fontSize: '0.82rem' }}>
-                  <span style={{ fontWeight: 700, color: '#A78BFA', marginRight: '6px' }}>@{c.username}:</span>
+                  <span style={{ fontWeight: 700, color: '#EC4899', marginRight: '6px' }}>@{c.username}:</span>
                   <span style={{ color: 'var(--text-main)' }}>{c.text}</span>
                 </div>
               ))}
@@ -183,7 +235,7 @@ export default function PostCard({ post }) {
         )}
 
         {/* Inline Comment Input Form */}
-        <form onSubmit={handleCommentSubmit} style={{ display: 'flex', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+        <form onSubmit={handleCommentSubmit} style={{ display: 'flex', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
           <input 
             type="text" 
             placeholder="Add a comment..."
@@ -193,13 +245,13 @@ export default function PostCard({ post }) {
               flex: 1,
               background: 'transparent',
               border: 'none',
-              color: '#FFF',
+              color: 'var(--text-main)',
               fontSize: '0.84rem',
               outline: 'none',
             }}
           />
           {commentInput.trim() && (
-            <button type="submit" style={{ color: '#8B5CF6', fontWeight: 700, fontSize: '0.84rem' }}>
+            <button type="submit" style={{ color: '#EC4899', fontWeight: 700, fontSize: '0.84rem' }}>
               Post
             </button>
           )}

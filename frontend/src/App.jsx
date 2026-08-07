@@ -5,7 +5,9 @@ import FeedPage from './pages/FeedPage';
 import EnginePage from './pages/EnginePage';
 import SentimentLabPage from './pages/SentimentLabPage';
 import ReportsPage from './pages/ReportsPage';
-import ApiPortalPage from './pages/ApiPortalPage';
+import CreatePostModal from './components/CreatePostModal';
+import NotificationsModal from './components/NotificationsModal';
+import PostDetailModal from './components/PostDetailModal';
 
 export default function App() {
   const getTabFromPath = () => {
@@ -13,11 +15,25 @@ export default function App() {
     if (path.includes('engine')) return 'engine';
     if (path.includes('sentiment')) return 'sentiments';
     if (path.includes('report')) return 'reports';
-    if (path.includes('api')) return 'api';
     return 'feed';
   };
 
   const [activeTab, setActiveTab] = useState(getTabFromPath);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [selectedPostDetail, setSelectedPostDetail] = useState(null);
+  
+  // Dark & Light Theme State
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     const handlePopState = () => {
@@ -30,28 +46,55 @@ export default function App() {
   const renderActivePage = () => {
     switch (activeTab) {
       case 'engine':
-        return <EnginePage />;
+        return <EnginePage onInspectPost={(post) => setSelectedPostDetail(post)} />;
       case 'sentiments':
         return <SentimentLabPage />;
       case 'reports':
         return <ReportsPage />;
-      case 'api':
-        return <ApiPortalPage />;
       case 'feed':
       default:
-        return <FeedPage />;
+        return <FeedPage onInspectPost={(post) => setSelectedPostDetail(post)} />;
     }
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div style={{ minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-dark)', color: 'var(--text-main)' }}>
+      <Navbar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onOpenCreatePost={() => setCreateModalOpen(true)}
+        onOpenNotifications={() => setNotificationsOpen(true)}
+      />
       
-      <main style={{ maxWidth: '1280px', width: '95%', margin: '0 auto', flexGrow: 1 }}>
+      <main style={{ width: '100%', maxWidth: '1440px', margin: '0 auto', flexGrow: 1, padding: '0 16px 40px 16px' }}>
         {renderActivePage()}
       </main>
 
       <Footer />
+
+      {/* Dynamic Modals */}
+      {createModalOpen && (
+        <CreatePostModal 
+          onClose={() => setCreateModalOpen(false)}
+          onPostCreated={() => window.location.reload()}
+        />
+      )}
+
+      {notificationsOpen && (
+        <NotificationsModal 
+          onClose={() => setNotificationsOpen(false)}
+        />
+      )}
+
+      {selectedPostDetail && (
+        <PostDetailModal
+          post={selectedPostDetail}
+          onClose={() => setSelectedPostDetail(null)}
+        />
+      )}
     </div>
   );
 }
+

@@ -76,6 +76,40 @@ export const fetchAnalyticsOverview = async () => {
   return handleResponse(res);
 };
 
+export const fetchUserProfile = async (username) => {
+  const res = await fetch(`${API_BASE}/instagram/user/${username}`);
+  return handleResponse(res);
+};
+
+export const fetchLiveInstagramData = async (query) => {
+  const res = await fetch(`${API_BASE}/instagram/fetch-live`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  return handleResponse(res);
+};
+
+export const fetchFeedRecommendations = async (query = 'career failure breakup success', steering = true, limit = 10) => {
+  const params = new URLSearchParams({ query, steering: steering ? 'true' : 'false', limit: limit.toString() });
+  const res = await fetch(`${API_BASE}/recommendations/feed?${params.toString()}`);
+  return handleResponse(res);
+};
+
+export const fetchUserWellbeing = async () => {
+  const res = await fetch(`${API_BASE}/user/wellbeing`);
+  return handleResponse(res);
+};
+
+export const createNewPost = async (postData) => {
+  const res = await fetch(`${API_BASE}/posts/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(postData),
+  });
+  return handleResponse(res);
+};
+
 export const logUserInteraction = async (interactionData) => {
   const res = await fetch(`${API_BASE}/interactions`, {
     method: 'POST',
@@ -84,3 +118,7 @@ export const logUserInteraction = async (interactionData) => {
   });
   return handleResponse(res);
 };
+
+
+
+

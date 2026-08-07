@@ -29,8 +29,14 @@ def create_app(config_class=Config) -> Flask:
 
     # Database Initialization & Real Content Seeding
     with app.app_context():
-        db.create_all()
-        seed_database()
+        try:
+            db.create_all()
+            seed_database()
+        except Exception as err:
+            print(f"[Database Warning] Re-creating database tables due to schema update: {err}")
+            db.drop_all()
+            db.create_all()
+            seed_database()
 
     # Serve React Single Page Application (SPA Fallback)
     @app.route('/', defaults={'path': ''})
@@ -61,14 +67,29 @@ def create_app(config_class=Config) -> Flask:
 
 
 def seed_database():
-    from app.models import Post
-    from app.utils.data_loader import parse_real_instagram_posts
+    from app.models import Post, UserProfile
+    from app.utils.data_loader import parse_real_instagram_posts, load_default_user_profiles
 
+    # 1. Seed User Profiles
+    if UserProfile.query.count() == 0:
+        default_profiles = load_default_user_profiles()
+        for prof in default_profiles:
+            new_prof = UserProfile(**prof)
+            db.session.add(new_prof)
+        try:
+            db.session.commit()
+            print("[Database] Successfully seeded default user profiles.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"[Database Error] UserProfile seeding failed: {e}")
+
+    # 2. Seed Posts
     if Post.query.count() == 0:
         real_posts = parse_real_instagram_posts()
         for p in real_posts:
             new_post = Post(
                 username=p["username"],
+                full_name=p.get("full_name", p["username"].capitalize()),
                 user_avatar=p["user_avatar"],
                 location=p["location"],
                 caption=p["caption"],
@@ -77,9 +98,14 @@ def seed_database():
                 likes_count=p["likes_count"],
                 comments_count=p["comments_count"],
                 views_count=p["views_count"],
+                follower_count=p.get("follower_count", 12500),
+                biography=p.get("biography", ""),
+                external_url=p.get("external_url", ""),
                 timestamp=p["timestamp"],
                 sentiment=p["sentiment"],
-                score=p["score"]
+                score=p["score"],
+                topic_category=p.get("topic_category", "General"),
+                is_verified=p.get("is_verified", True)
             )
             db.session.add(new_post)
         try:
@@ -87,4 +113,6 @@ def seed_database():
             print("[Database] Successfully seeded real Instagram dataset posts.")
         except Exception as e:
             db.session.rollback()
-            print(f"[Database Error] Seeding failed: {e}")
+            print(f"[Database Error] Post seeding failed: {e}")
+
+
