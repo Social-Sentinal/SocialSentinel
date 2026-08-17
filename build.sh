@@ -10,7 +10,7 @@ cd ..
 
 echo "==> Installing Python Dependencies & Downloading NLTK Corpora..."
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install --no-cache-dir --retries 10 --timeout 60 -r requirements.txt
 python -c "import nltk; nltk.download('stopwords')"
 
 echo "==> Build Completed Successfully!"
