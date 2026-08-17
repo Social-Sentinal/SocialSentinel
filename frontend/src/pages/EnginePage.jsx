@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, Compass, Layers, CheckCircle2, Sliders, Cpu, ShieldCheck } from 'lucide-react';
+import MediaImage from '../components/MediaImage';
 import UserProfileModal from '../components/UserProfileModal';
 import { fetchContentRecommendations, fetchCollaborativeRecommendations } from '../services/api';
 
@@ -253,7 +254,7 @@ export default function EnginePage({ onInspectPost }) {
                   style={{ position: 'relative', width: '100%', aspectRatio: '1/1', backgroundColor: '#000', cursor: 'pointer' }}
                   title="Click media to inspect AI NLP Extraction Pipeline"
                 >
-                  <img 
+                  <MediaImage 
                     src={rec.image_url} 
                     alt="Rec media" 
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
@@ -294,11 +295,11 @@ export default function EnginePage({ onInspectPost }) {
 
                 <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
                   <div 
-                    onClick={() => setSelectedUsername(rec.username || 'humansofny')}
+                    onClick={() => setSelectedUsername(rec.username || 'creator_pro')}
                     style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
                   >
                     <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#EC4899' }}>
-                      @{rec.username || 'humansofny'}
+                      @{rec.username || 'creator_pro'}
                     </span>
                     <CheckCircle2 size={14} color="#3B82F6" />
                   </div>

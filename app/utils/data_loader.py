@@ -1,4 +1,5 @@
 import os
+import random
 import joblib
 import pickle
 import pandas as pd
@@ -14,18 +15,41 @@ UNSPLASH_POST_IMAGES = [
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80",
     "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=800&auto=format&fit=crop&q=80",
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800&auto=format&fit=crop&q=80"
+    "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&auto=format&fit=crop&q=80"
 ]
 
 AVATARS = [
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80",
-    "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=150&auto=format&fit=crop&q=80"
+    "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=150&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80"
 ]
 
-USERNAMES = ["humansofny", "travel_journal", "urban_vibes", "street_snaps", "life_moments", "wanderer_pro"]
-LOCATIONS = ["New York, NY", "London, UK", "Paris, France", "Tokyo, Japan", "Los Angeles, CA", "San Francisco, CA"]
+DIVERSE_CREATORS = [
+    {"username": "career_mentor", "full_name": "Alex Tech Career", "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", "bio": "Tech career coach & engineering mentor"},
+    {"username": "interview_pro", "full_name": "Sarah Interview Hacks", "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", "bio": "Helping engineers land top tech offers"},
+    {"username": "mindful_living", "full_name": "Elena Wellness", "avatar": "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80", "bio": "Mindfulness & self-care storyteller"},
+    {"username": "self_healing_guide", "full_name": "Marcus Self Love", "avatar": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=150&auto=format&fit=crop&q=80", "bio": "Author & emotional healing practitioner"},
+    {"username": "techcrunch", "full_name": "TechCrunch", "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80", "bio": "Reporting on tech news, startups, venture capital, and Silicon Valley innovations."},
+    {"username": "zen_master", "full_name": "Zen Mindfulness Guide", "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80", "bio": "Daily meditation, stress relief techniques, and emotional wellness coaching."},
+    {"username": "code_craft", "full_name": "Dev Code Craft", "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80", "bio": "Master Full-Stack, AI Engineering & Software Architecture."},
+    {"username": "travel_bug", "full_name": "Wanderlust Travels", "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80", "bio": "Exploring hidden world landscapes and outdoor mountain adventures. 🏔️✈️"},
+    {"username": "natgeo", "full_name": "National Geographic", "avatar": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=150&auto=format&fit=crop&q=80", "bio": "Inspiring people to care about the planet since 1888. 🌍✨"},
+    {"username": "mrbeast", "full_name": "Jimmy Donaldson", "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", "bio": "I want to make the world a better place before I die. Feastables & Philanthropy."},
+    {"username": "creators", "full_name": "Instagram Creators", "avatar": "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80", "bio": "Tips, inspiration, and news for digital content creators building their community."},
+    {"username": "humansofny", "full_name": "Humans of New York", "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", "bio": "New York City, one story at a time. Photographed and written by Brandon Stanton."}
+]
+
+USERNAMES = [c["username"] for c in DIVERSE_CREATORS]
+LOCATIONS = ["New York, NY", "London, UK", "Paris, France", "Tokyo, Japan", "Los Angeles, CA", "San Francisco, CA", "Seattle, WA", "Austin, TX"]
 
 
 def load_model(filename: str) -> Optional[Any]:
@@ -58,96 +82,17 @@ def load_dataset(filename: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-PROFILES_CATALOG = {
-    "humansofny": {
-        "username": "humansofny",
-        "full_name": "Humans of New York",
-        "user_avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
-        "followers_count": 12500000,
-        "following_count": 142,
-        "posts_count": 6420,
-        "biography": "New York City, one story at a time. Photographed and written by Brandon Stanton.",
-        "external_url": "https://www.humansofnewyork.com",
-        "is_verified": True
-    },
-    "mrbeast": {
-        "username": "mrbeast",
-        "full_name": "Jimmy Donaldson",
-        "user_avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
-        "followers_count": 59800000,
-        "following_count": 290,
-        "posts_count": 890,
-        "biography": "I want to make the world a better place before I die. Feastables & Philanthropy.",
-        "external_url": "https://feastables.com",
-        "is_verified": True
-    },
-    "natgeo": {
-        "username": "natgeo",
-        "full_name": "National Geographic",
-        "user_avatar": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=300&auto=format&fit=crop&q=80",
-        "followers_count": 284000000,
-        "following_count": 150,
-        "posts_count": 28900,
-        "biography": "Inspiring people to care about the planet since 1888. 🌍✨",
-        "external_url": "https://www.nationalgeographic.com",
-        "is_verified": True
-    },
-    "techcrunch": {
-        "username": "techcrunch",
-        "full_name": "TechCrunch",
-        "user_avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&auto=format&fit=crop&q=80",
-        "followers_count": 1800000,
-        "following_count": 420,
-        "posts_count": 4300,
-        "biography": "Reporting on tech news, startups, venture capital, and Silicon Valley innovations.",
-        "external_url": "https://techcrunch.com",
-        "is_verified": True
-    },
-    "creators": {
-        "username": "creators",
-        "full_name": "Instagram Creators",
-        "user_avatar": "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&auto=format&fit=crop&q=80",
-        "followers_count": 14200000,
-        "following_count": 98,
-        "posts_count": 1200,
-        "biography": "Tips, inspiration, and news for digital content creators building their community.",
-        "external_url": "https://creators.instagram.com",
-        "is_verified": True
-    },
-    "zen_master": {
-        "username": "zen_master",
-        "full_name": "Zen Mindfulness Guide",
-        "user_avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80",
-        "followers_count": 420000,
-        "following_count": 110,
-        "posts_count": 480,
-        "biography": "Daily meditation, stress relief techniques, and emotional wellness coaching.",
-        "external_url": "https://zenwellness.com",
-        "is_verified": True
-    },
-    "code_craft": {
-        "username": "code_craft",
-        "full_name": "Dev Code Craft",
-        "user_avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80",
-        "followers_count": 890000,
-        "following_count": 320,
-        "posts_count": 1420,
-        "biography": "Master Full-Stack, AI Engineering & Software Architecture.",
-        "external_url": "https://codecraft.dev",
-        "is_verified": True
-    },
-    "travel_bug": {
-        "username": "travel_bug",
-        "full_name": "Wanderlust Travels",
-        "user_avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80",
-        "followers_count": 1650000,
-        "following_count": 540,
-        "posts_count": 2300,
-        "biography": "Exploring hidden world landscapes and outdoor mountain adventures. 🏔️✈️",
-        "external_url": "https://wanderlust.com",
-        "is_verified": True
-    }
-}
+PROFILES_CATALOG = {c["username"]: {
+    "username": c["username"],
+    "full_name": c["full_name"],
+    "user_avatar": c["avatar"],
+    "followers_count": random.randint(15000, 25000000),
+    "following_count": random.randint(120, 600),
+    "posts_count": random.randint(80, 4500),
+    "biography": c["bio"],
+    "external_url": f"https://instagram.com/{c['username']}",
+    "is_verified": True
+} for c in DIVERSE_CREATORS}
 
 
 def load_default_user_profiles() -> list[dict]:
@@ -252,19 +197,9 @@ def parse_real_instagram_posts() -> list[dict]:
             if not caption or caption == "nan" or len(caption) < 15:
                 continue
 
-            username = str(row.get("ownerUsername", USERNAMES[idx % len(USERNAMES)])).lower().strip()
-            if username == "nan" or not username:
-                username = USERNAMES[idx % len(USERNAMES)]
-
-            profile_meta = PROFILES_CATALOG.get(username, {
-                "username": username,
-                "full_name": str(row.get("ownerFullName", username.capitalize())),
-                "user_avatar": AVATARS[idx % len(AVATARS)],
-                "followers_count": int(row.get("likesCount", 1200)) * 25,
-                "biography": "Content creator on Instagram.",
-                "external_url": f"https://instagram.com/{username}",
-                "is_verified": True if idx % 2 == 0 else False
-            })
+            # Pick creator metadata dynamically across diverse catalog
+            creator = DIVERSE_CREATORS[idx % len(DIVERSE_CREATORS)]
+            username = creator["username"]
 
             likes = int(row.get("likesCount", 1240)) if str(row.get("likesCount", "")).isdigit() else 1240
             comments = int(row.get("commentsCount", 42)) if str(row.get("commentsCount", "")).isdigit() else 42
@@ -277,8 +212,8 @@ def parse_real_instagram_posts() -> list[dict]:
             hashtags_list = [w for w in words if w.startswith("#")]
             hashtags = " ".join(hashtags_list[:5]) if hashtags_list else "#life #story #instagram"
 
-            is_pos = any(w in caption.lower() for w in ["love", "happy", "beautiful", "blessed", "wonderful", "miracle", "rich", "great", "inspire"])
-            is_neg = any(w in caption.lower() for w in ["fail", "sad", "depressed", "hard", "lost", "tired", "broken"])
+            is_pos = any(w in caption.lower() for w in ["love", "happy", "beautiful", "blessed", "wonderful", "miracle", "rich", "great", "inspire", "success"])
+            is_neg = any(w in caption.lower() for w in ["fail", "sad", "depressed", "hard", "lost", "tired", "broken", "rejection"])
             
             sentiment = "Positive" if is_pos else ("Negative" if is_neg else "Neutral")
             score = 0.88 if is_pos else (0.20 if is_neg else 0.50)
@@ -295,8 +230,8 @@ def parse_real_instagram_posts() -> list[dict]:
 
             posts.append({
                 "username": username,
-                "full_name": profile_meta["full_name"],
-                "user_avatar": profile_meta["user_avatar"],
+                "full_name": creator["full_name"],
+                "user_avatar": creator["avatar"],
                 "location": location,
                 "caption": caption[:350],
                 "hashtags": hashtags,
@@ -304,19 +239,17 @@ def parse_real_instagram_posts() -> list[dict]:
                 "likes_count": likes,
                 "comments_count": comments,
                 "views_count": likes * 3,
-                "follower_count": profile_meta["followers_count"],
-                "biography": profile_meta["biography"],
-                "external_url": profile_meta["external_url"],
+                "follower_count": random.randint(25000, 1500000),
+                "biography": creator["bio"],
+                "external_url": f"https://instagram.com/{username}",
                 "timestamp": str(row.get("timestamp", "2024-09-15 14:30:00"))[:10],
                 "sentiment": sentiment,
                 "score": score,
                 "topic_category": topic,
-                "is_verified": profile_meta["is_verified"]
+                "is_verified": idx % 2 == 0
             })
 
             if len(posts) >= 30:
                 break
 
     return posts
-
-

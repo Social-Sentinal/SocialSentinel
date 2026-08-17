@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, UserCheck } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, CheckCircle2, Play } from 'lucide-react';
+import MediaImage from './MediaImage';
 import { toggleLikePost, addCommentToPost, logUserInteraction } from '../services/api';
 
 export default function PostCard({ post, onOpenUser, onInspectPost }) {
@@ -17,7 +18,6 @@ export default function PostCard({ post, onOpenUser, onInspectPost }) {
     }
   };
 
-  // Like Toggle
   const handleLike = async () => {
     const nextState = !liked;
     setLiked(nextState);
@@ -30,7 +30,6 @@ export default function PostCard({ post, onOpenUser, onInspectPost }) {
     }
   };
 
-  // Save Toggle
   const handleSave = async () => {
     const nextState = !saved;
     setSaved(nextState);
@@ -46,7 +45,6 @@ export default function PostCard({ post, onOpenUser, onInspectPost }) {
     }
   };
 
-  // Submit Comment
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!commentInput.trim() || isSubmittingComment) return;
@@ -73,7 +71,6 @@ export default function PostCard({ post, onOpenUser, onInspectPost }) {
     }
   };
 
-  // Sentiment Pill Helper
   const getSentimentBadge = (sentiment) => {
     const s = (sentiment || '').toLowerCase();
     if (s === 'positive') {
@@ -91,11 +88,12 @@ export default function PostCard({ post, onOpenUser, onInspectPost }) {
         <div 
           onClick={triggerUserModal}
           style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
-          title="Click to view real Instagram user details"
+          title="Click to view Instagram user details"
         >
-          <img 
+          <MediaImage 
             src={post.user_avatar} 
             alt={post.username}
+            isAvatar={true}
             style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #8B5CF6' }} 
           />
           <div>
@@ -121,22 +119,23 @@ export default function PostCard({ post, onOpenUser, onInspectPost }) {
         </div>
       </div>
 
-      {/* Post Image with Click to Inspect Overlay */}
+      {/* Post Media (Image/Video Overlay) */}
       <div 
         className="post-media-container" 
         onClick={triggerInspect} 
         style={{ cursor: 'pointer', position: 'relative' }}
-        title="Click post to open Reel player & AI NLP Content Extraction"
+        title="Click post to view details & NLP sentiment analysis"
       >
-        <img 
+        <MediaImage 
           src={post.image_url} 
           alt="Post content" 
           loading="lazy"
         />
+        
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 40%)',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 40%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -150,9 +149,10 @@ export default function PostCard({ post, onOpenUser, onInspectPost }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
           }}>
-            <div style={{ width: 0, height: 0, borderTop: '8px solid transparent', borderBottom: '8px solid transparent', borderLeft: '14px solid #FFF', marginLeft: '3px' }} />
+            <Play size={20} color="#FFF" style={{ marginLeft: '3px' }} />
           </div>
         </div>
       </div>
@@ -177,7 +177,7 @@ export default function PostCard({ post, onOpenUser, onInspectPost }) {
 
             <button 
               style={{ color: 'var(--text-main)' }}
-              onClick={() => alert(`Shared post: ${post.url || 'https://instagram.com'}`)}
+              onClick={() => alert(`Shared post: ${post.url || 'https://socialsentinel.ai'}`)}
             >
               <Share2 size={22} />
             </button>

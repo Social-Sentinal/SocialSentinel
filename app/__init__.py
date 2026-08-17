@@ -68,10 +68,11 @@ def create_app(config_class=Config) -> Flask:
 
 def seed_database():
     from app.models import Post, UserProfile
-    from app.utils.data_loader import parse_real_instagram_posts, load_default_user_profiles
+    from app.utils.data_loader import parse_real_instagram_posts, load_default_user_profiles, DIVERSE_CREATORS
 
     # 1. Seed User Profiles
-    if UserProfile.query.count() == 0:
+    if UserProfile.query.count() < len(DIVERSE_CREATORS):
+        UserProfile.query.delete()
         default_profiles = load_default_user_profiles()
         for prof in default_profiles:
             new_prof = UserProfile(**prof)
@@ -84,7 +85,8 @@ def seed_database():
             print(f"[Database Error] UserProfile seeding failed: {e}")
 
     # 2. Seed Posts
-    if Post.query.count() == 0:
+    if Post.query.count() < 10:
+        Post.query.delete()
         real_posts = parse_real_instagram_posts()
         for p in real_posts:
             new_post = Post(
@@ -114,5 +116,18 @@ def seed_database():
         except Exception as e:
             db.session.rollback()
             print(f"[Database Error] Post seeding failed: {e}")
+    else:
+        # Re-balance creator usernames across existing posts if they were repetitive
+        all_posts = Post.query.all()
+        for idx, post in enumerate(all_posts):
+            creator = DIVERSE_CREATORS[idx % len(DIVERSE_CREATORS)]
+            post.username = creator["username"]
+            post.full_name = creator["full_name"]
+            post.user_avatar = creator["avatar"]
+            post.biography = creator["bio"]
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
 

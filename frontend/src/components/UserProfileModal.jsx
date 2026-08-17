@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, ExternalLink, Users, Grid, Heart, MessageCircle } from 'lucide-react';
+import MediaImage from './MediaImage';
 import { fetchUserProfile } from '../services/api';
 
 export default function UserProfileModal({ username, onClose }) {
@@ -44,9 +45,10 @@ export default function UserProfileModal({ username, onClose }) {
           <div>
             {/* User Profile Card */}
             <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              <img
+              <MediaImage
                 src={profile.user_avatar}
                 alt={profile.username}
+                isAvatar={true}
                 style={{
                   width: 80,
                   height: 80,
@@ -169,7 +171,7 @@ export default function UserProfileModal({ username, onClose }) {
                       background: '#1E293B',
                     }}
                   >
-                    <img
+                    <MediaImage
                       src={p.image_url}
                       alt="post preview"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}

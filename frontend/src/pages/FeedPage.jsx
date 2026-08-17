@@ -4,6 +4,8 @@ import PostCard from '../components/PostCard';
 import UserProfileModal from '../components/UserProfileModal';
 import { fetchPosts, fetchAnalyticsOverview, fetchLiveInstagramData, fetchFeedRecommendations, fetchUserWellbeing } from '../services/api';
 
+import MediaImage from '../components/MediaImage';
+
 const FEATURED_PROFILES = [
   { username: 'humansofny', label: 'Humans of NY', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
   { username: 'mrbeast', label: 'MrBeast', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80' },
@@ -239,9 +241,10 @@ export default function FeedPage({ onInspectPost }) {
                   justifyContent: 'center',
                 }}
               >
-                <img
+                <MediaImage
                   src={prof.avatar}
                   alt={prof.label}
+                  isAvatar={true}
                   style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', background: 'var(--bg-card)' }}
                 />
               </div>
