@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 
 // Generates an inline SVG gradient data URL so images never appear broken on any offline/hosted machine
-export function generateGradientSvg(text = 'Cosmos', isAvatar = false) {
-  const seed = (text || 'C').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+export function generateGradientSvg(text = 'SocialSentinel', isAvatar = false) {
+  const seed = (text || 'S').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const hues = [
-    ['#6366f1', '#a855f7'],
-    ['#3b82f6', '#06b6d4'],
-    ['#ec4899', '#8b5cf6'],
-    ['#f59e0b', '#ef4444'],
-    ['#10b981', '#3b82f6'],
-    ['#8b5cf6', '#d946ef']
+    ['#4f46e5', '#7c3aed'],
+    ['#2563eb', '#06b6d4'],
+    ['#0ea5e9', '#6366f1'],
+    ['#d946ef', '#8b5cf6'],
+    ['#10b981', '#2563eb'],
+    ['#6366f1', '#ec4899']
   ];
   const [c1, c2] = hues[seed % hues.length];
-  const initial = (text || 'C').trim().charAt(0).toUpperCase();
+  const initial = (text || 'S').trim().charAt(0).toUpperCase();
 
   const svg = isAvatar
     ? `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
@@ -35,7 +35,7 @@ export function generateGradientSvg(text = 'Cosmos', isAvatar = false) {
         <rect width="800" height="450" fill="url(#g)"/>
         <circle cx="400" cy="225" r="120" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
         <circle cx="400" cy="225" r="60" fill="rgba(255,255,255,0.08)"/>
-        <text x="400" y="235" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.9">✨ COSMOS</text>
+        <text x="400" y="235" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="600" fill="#ffffff" text-anchor="middle" opacity="0.9">🛡️ SOCIALSENTINEL</text>
       </svg>`;
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;

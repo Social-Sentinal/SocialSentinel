@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: cosmos-social
+    name: socialsentinel
     runtime: python
     buildCommand: bash build.sh
     startCommand: gunicorn --workers 2 --threads 4 --timeout 120 "run:app"

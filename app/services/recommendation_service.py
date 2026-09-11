@@ -118,9 +118,9 @@ def recommend(user_id, query="", limit=20, exploration=0.15):
         elif cr_score > 0.4:
             reasons.append("Creator affinity")
         elif engagement > 0.5:
-            reasons.append("Trending in Cosmos")
+            reasons.append("Trending on SocialSentinel")
         elif expl > 0.25:
-            reasons.append("Serendipity discovery")
+            reasons.append("Discovery recommendation")
         else:
             reasons.append("Recommended for you")
 
@@ -171,7 +171,7 @@ def recommend(user_id, query="", limit=20, exploration=0.15):
                 post_id=item["post"].id,
                 score=item["score"],
                 reason=item["reason"],
-                model_version="hybrid-cosmos-v4"
+                model_version="hybrid-sentinel-v4"
             ))
         db.session.commit()
     except Exception:
@@ -218,7 +218,7 @@ def get_serendipity_feed(user_id, limit=12, serendipity_factor=0.65):
         {
             "post": p.to_dict(viewer=user_id),
             "score": round(random.uniform(0.70, 0.95), 2),
-            "reason": f"🌌 Serendipity discovery · Expand into #{p.topic_category}"
+            "reason": f"✨ Discovery radar · Expand into #{p.topic_category}"
         }
         for p in selected
     ]

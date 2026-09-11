@@ -32,7 +32,7 @@ def auth_error(msg="Authentication required"):
 
 @api_bp.get("/health")
 def api_health():
-    return {"status": "ok", "service": "Cosmos Social", "version": "4.1.0"}
+    return {"status": "ok", "service": "SocialSentinel", "version": "4.2.0"}
 
 @api_bp.post("/auth/register")
 @limiter.limit("10 per minute")

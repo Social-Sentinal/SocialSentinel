@@ -25,7 +25,7 @@ def create_app(config_class=Config):
         
     @app.get("/health")
     def health():
-        return {"status": "ok", "service": "Cosmos Social", "version": "4.1.0"}
+        return {"status": "ok", "service": "SocialSentinel", "version": "4.2.0"}
         
     @app.get("/ready")
     def ready():
@@ -45,7 +45,7 @@ def create_app(config_class=Config):
             return send_from_directory(str(FRONTEND_DIST_DIR), path)
         if (FRONTEND_DIST_DIR / "index.html").exists():
             return send_from_directory(str(FRONTEND_DIST_DIR), "index.html")
-        return "Cosmos Social Platform API is Running.", 200
+        return "SocialSentinel Platform API is Running.", 200
 
     @app.errorhandler(500)
     def err(e):
@@ -63,21 +63,22 @@ def seed_database():
         for name, ver, alg in [
             ("sentiment", "v2", "RandomForest + TF-IDF with Lexicon Nuance"),
             ("emotion", "v2", "Heuristic Emotion Pattern Engine"),
-            ("ranker", "v4", "Cosmos Hybrid Recommendation + Serendipity Filter")
+            ("ranker", "v4", "SocialSentinel Hybrid Recommendation + Diversity Engine")
         ]:
             db.session.add(ModelVersion(name=name, version=ver, algorithm=alg, status="active"))
         db.session.commit()
 
     # 2. Communities
     default_communities = [
-        ("Astrophysics & Cosmos", "astrophysics-cosmos", "🌌", "Exoplanets, deep space telescopes, gravitational waves, and cosmological discoveries.", "linear-gradient(135deg, #4f46e5, #06b6d4)"),
-        ("AI & Tech", "ai-tech", "⚡", "Machine learning, neural networks, foundation models, and synthetic reasoning.", "linear-gradient(135deg, #ec4899, #8b5cf6)"),
-        ("Web Dev", "web-dev", "💻", "Modern fullstack architecture, React UI systems, fast APIs, and performance engineering.", "linear-gradient(135deg, #3b82f6, #10b981)"),
-        ("Creative Arts", "creative-arts", "🎨", "Generative aesthetics, digital painting, procedural design, and creative code.", "linear-gradient(135deg, #f59e0b, #ef4444)"),
-        ("Mindfulness", "mindfulness", "🌿", "Digital wellbeing, calm productivity, deep work routines, and philosophy.", "linear-gradient(135deg, #10b981, #14b8a6)")
+        ("AI & Tech", "ai-tech", "⚡", "Machine learning, neural networks, foundation models, and synthetic reasoning.", "linear-gradient(135deg, #6366f1, #8b5cf6)"),
+        ("Cybersecurity & Privacy", "cybersecurity", "🛡️", "Defensive security, privacy-preserving systems, cryptography, and network resilience.", "linear-gradient(135deg, #0ea5e9, #2563eb)"),
+        ("Web Engineering", "web-engineering", "💻", "Modern fullstack architecture, React UI systems, fast APIs, and performance engineering.", "linear-gradient(135deg, #3b82f6, #10b981)"),
+        ("Creative Tech & Design", "creative-tech", "🎨", "Generative aesthetics, digital design, procedural systems, and creative code.", "linear-gradient(135deg, #f59e0b, #ef4444)"),
+        ("Digital Wellbeing", "digital-wellbeing", "🌿", "Mindful computing, calm focus, digital balance, and personal productivity.", "linear-gradient(135deg, #10b981, #14b8a6)")
     ]
     for name, slug, icon, desc, grad in default_communities:
-        if not Community.query.filter_by(slug=slug).first():
+        existing = Community.query.filter_by(slug=slug).first()
+        if not existing:
             db.session.add(Community(name=name, slug=slug, icon=icon, description=desc, banner_gradient=grad))
     db.session.commit()
 
@@ -86,150 +87,114 @@ def seed_database():
     if not demo_user:
         demo_user = User(
             username="demo",
-            email="demo@cosmos.social",
-            display_name="Cosmos Explorer",
-            bio="Navigating the frontiers of AI, exoplanets, and high-performance engineering 🪐",
+            email="demo@socialsentinel.io",
+            display_name="Sentinel Explorer",
+            bio="Exploring intelligent recommendations, sentiment steering, and AI safety on SocialSentinel 🛡️",
             avatar_url=""
         )
         demo_user.set_password("Demo1234!")
         db.session.add(demo_user)
         db.session.flush()
-        db.session.add(UserPreference(user_id=demo_user.id, preferred_topics="Astrophysics & Cosmos,AI & Tech,Web Dev", exploration_rate=0.25))
+        db.session.add(UserPreference(user_id=demo_user.id, preferred_topics="AI & Tech,Web Engineering,Cybersecurity & Privacy", exploration_rate=0.20))
         db.session.commit()
 
-    # Seed creators
+    # Seed creator profiles
     creators_info = [
-        ("astronomy_hub", "Cosmos Observer", "astronomy@cosmos.social", "Stargazer tracking deep sky nebulae, James Webb data, and interstellar phenomena 🔭"),
-        ("ai_frontier", "Neural Architect", "ai@cosmos.social", "Exploring multi-modal AI, agentic reasoning, and next-gen transformer systems 🤖"),
-        ("dev_craft", "Elena Vance", "elena@cosmos.social", "Staff engineer building resilient distributed systems and responsive web interfaces ⚡"),
-        ("creative_mind", "Marcus Thorne", "marcus@cosmos.social", "Digital artist experimenting with algorithmic geometry, color theory, and sound 🎨"),
-        ("mindful_space", "Aria Lin", "aria@cosmos.social", "Advocate for mindful computing, digital serenity, and intentional living 🌿")
+        ("ai_research", "AI Research Lab", "ai@socialsentinel.io", "Exploring multimodal foundation models, local inference, and agentic workflows 🤖"),
+        ("sentinel_sec", "Sentinel Security", "sec@socialsentinel.io", "Threat intelligence, privacy-preserving AI, and web security engineering 🛡️"),
+        ("dev_craft", "Elena Vance", "elena@socialsentinel.io", "Staff engineer building resilient distributed backends and modern web UI systems ⚡"),
+        ("design_pulse", "Marcus Thorne", "marcus@socialsentinel.io", "Design systems, typography, micro-interactions, and visual harmony 🎨"),
+        ("mindful_tech", "Aria Lin", "aria@socialsentinel.io", "Advocate for mindful technology, intentional screen habits, and digital wellness 🌿")
     ]
     creator_objs = {}
     for uname, dname, email, bio in creators_info:
         u = User.query.filter_by(username=uname).first()
         if not u:
             u = User(username=uname, display_name=dname, email=email, bio=bio)
-            u.set_password("CosmosPass123!")
+            u.set_password("SentinelPass123!")
             db.session.add(u)
             db.session.flush()
             db.session.add(UserPreference(user_id=u.id))
             db.session.commit()
         creator_objs[uname] = u
 
-    # 4. Seed Posts if database is sparse (< 10 posts)
+    # 4. Seed rich posts if sparse (< 10 posts)
     if Post.query.count() < 10:
         base_posts = [
             (
-                "astronomy_hub",
-                "Spectacular new high-resolution composite of the Pillars of Creation captured in near-infrared. Notice the vibrant hydrogen gas towers where proto-stars are coalescing at immense gravity! The scale of our universe never ceases to inspire wonder.",
-                "#Cosmos #JamesWebb #Astrophysics #Astronomy #Universe",
-                "Astrophysics & Cosmos",
-                "Positive", 0.94, "wonder", 0.92
-            ),
-            (
-                "ai_frontier",
-                "Breakthroughs in local model inference are accelerating fast. Running 7B-parameter models quantized down to 4-bits directly in user memory with sub-15ms token latencies is revolutionizing privacy-preserving AI applications.",
+                "ai_research",
+                "Breakthroughs in local model inference are accelerating fast. Running quantized 4-bit transformer architectures directly in browser memory with sub-15ms token latencies provides true user privacy without cloud dependence.",
                 "#AI #MachineLearning #OpenSource #TechInnovation",
                 "AI & Tech",
-                "Positive", 0.88, "inspiration", 0.85
+                "Positive", 0.92, "inspiration", 0.88
+            ),
+            (
+                "sentinel_sec",
+                "Zero-trust security principles in modern API design: token rotation, strict rate limiting, robust cryptographic hashing, and automated anomaly detection. Protecting user data is the foundational responsibility of any social network.",
+                "#Cybersecurity #InfoSec #Privacy #WebSecurity",
+                "Cybersecurity & Privacy",
+                "Positive", 0.89, "curiosity", 0.85
             ),
             (
                 "dev_craft",
-                "Designing interfaces that wow users isn't just about flashy animations—it's about intentional typography, consistent visual rhythm, thoughtful contrast, and instant feedback. Beautiful software is a joy to build and use.",
-                "#WebDev #DesignSystems #Frontend #UX #React",
-                "Web Dev",
-                "Positive", 0.89, "joy", 0.82
+                "Designing software that wows users is about intentional typography, consistent layout grids, thoughtful contrast, and instant feedback. Beautiful software is an absolute joy to build and use.",
+                "#WebEngineering #DesignSystems #Frontend #UX #React",
+                "Web Engineering",
+                "Positive", 0.94, "joy", 0.90
             ),
             (
-                "creative_mind",
-                "Exploring chromatic aberration and cosmic palette blending for my newest generative series. Each frame is computed mathematically using reaction-diffusion differential systems.",
-                "#CreativeArts #GenerativeArt #Design #DigitalArt #CosmicVibes",
-                "Creative Arts",
-                "Positive", 0.86, "wonder", 0.84
+                "design_pulse",
+                "Crafting high-contrast design systems: dark mode shouldn't just be inverted colors; it requires calibrated gray scales, refined elevations, and intentional glowing accents that reduce visual strain.",
+                "#DesignSystems #UIUX #Creativity #VisualHierarchy",
+                "Creative Tech & Design",
+                "Positive", 0.88, "wonder", 0.84
             ),
             (
-                "mindful_space",
-                "Taking a 20-minute digital pause during sunset today. Continuous notifications fragment deep focus. Reclaiming intentional quiet is one of the best upgrades you can give your mental bandwidth.",
-                "#Mindfulness #DigitalWellbeing #Focus #MentalHealth #Balance",
-                "Mindfulness",
-                "Neutral", 0.76, "empathy", 0.80
+                "mindful_tech",
+                "Taking intentional digital pauses during the workday preserves focus and reduces cognitive fatigue. Algorithms should empower human agency, not capture human attention through addictive loops.",
+                "#DigitalWellbeing #Focus #MentalHealth #Balance",
+                "Digital Wellbeing",
+                "Positive", 0.85, "empathy", 0.82
             ),
             (
-                "astronomy_hub",
-                "Astronomers have confirmed atmospheric water vapor signatures on exoplanet K2-18b in the habitable zone. While not definitive proof of biology, finding temperate worlds with liquid envelopes brings us closer to answering the ultimate question.",
-                "#Exoplanets #HabitableZone #Astrobiology #SpaceExploration",
-                "Astrophysics & Cosmos",
-                "Positive", 0.91, "curiosity", 0.89
-            ),
-            (
-                "ai_frontier",
+                "ai_research",
                 "Hybrid recommendation architectures that combine collaborative user signals with content TF-IDF vectors and serendipity exploration consistently outperform pure engagement maximizers. Diversity keeps platforms healthy.",
                 "#RecommenderSystems #DataScience #InformationRetrieval #AI",
                 "AI & Tech",
                 "Positive", 0.87, "curiosity", 0.86
             ),
             (
+                "sentinel_sec",
+                "Client-side encryption for direct messaging ensures private communications remain strictly between participants. As AI systems become more prevalent, data privacy and provenance will define trust.",
+                "#Privacy #Encryption #SocialSentinel #Security",
+                "Cybersecurity & Privacy",
+                "Positive", 0.90, "inspiration", 0.87
+            ),
+            (
                 "dev_craft",
                 "Clean code isn't code with zero comments; it's code where architecture speaks clearly, error handling is explicit, and developers can onboard without friction. Maintainable over clever every single time.",
                 "#SoftwareEngineering #CodeQuality #Architecture #DevLife",
-                "Web Dev",
-                "Positive", 0.84, "inspiration", 0.81
+                "Web Engineering",
+                "Positive", 0.86, "inspiration", 0.83
             ),
             (
-                "creative_mind",
-                "The intersection of music synthesis and generative geometry: mapped ambient synthesizer polyphony to 3D particle turbulence fields. The results feel like peering into an aurora borealis.",
-                "#GenerativeAudio #VisualArt #Synth #CreativeCode",
-                "Creative Arts",
-                "Positive", 0.90, "wonder", 0.88
+                "design_pulse",
+                "Experimenting with algorithmic layouts and procedural gradients for dynamic UI cards. The result feels organic, alive, and instantly engaging.",
+                "#GenerativeDesign #CreativeCode #Frontend #Animation",
+                "Creative Tech & Design",
+                "Positive", 0.91, "wonder", 0.89
             ),
             (
-                "mindful_space",
-                "Three questions to ask before opening social feeds: 1. Am I seeking connection or escaping boredom? 2. What intention do I have? 3. When will I step away? Mindful agency changes everything.",
+                "mindful_tech",
+                "Three questions to ask before opening your feeds: 1. Am I seeking connection or escaping boredom? 2. What intention do I have? 3. When will I step away? Mindful agency changes everything.",
                 "#IntentionalLiving #Wellbeing #Focus #MindfulTech",
-                "Mindfulness",
+                "Digital Wellbeing",
                 "Neutral", 0.74, "empathy", 0.78
-            ),
-            (
-                "astronomy_hub",
-                "The James Webb Space Telescope has revealed supermassive black holes at the dawn of the universe with masses that defy early cosmic expansion models. A thrilling time for theoretical physics!",
-                "#BlackHoles #Cosmology #Physics #DeepSpace",
-                "Astrophysics & Cosmos",
-                "Positive", 0.85, "wonder", 0.91
-            ),
-            (
-                "ai_frontier",
-                "Understanding the mathematics behind cosine similarity in high-dimensional vector spaces: how token embeddings capture subtle semantic relationships between astrophysics and computational theory.",
-                "#Embeddings #LinearAlgebra #VectorSearch #NLP",
-                "AI & Tech",
-                "Neutral", 0.80, "curiosity", 0.84
             )
         ]
 
-        # Also attempt loading from CSV if present to add variety
-        csv_path = Path(__file__).resolve().parent.parent / "data" / "collaborative.csv"
-        csv_posts = []
-        if csv_path.exists():
-            try:
-                df = pd.read_csv(csv_path, nrows=8)
-                for _, row in df.iterrows():
-                    cap = str(row.get("caption", "")).strip()
-                    tags = str(row.get("hashtags", "")).strip()
-                    if cap and len(cap) > 10:
-                        csv_posts.append((
-                            "astronomy_hub",
-                            cap,
-                            tags or "#Cosmos #Community",
-                            "Astrophysics & Cosmos",
-                            "Positive", 0.82, "wonder", 0.80
-                        ))
-            except Exception:
-                pass
-
-        all_to_seed = base_posts + csv_posts
-
         created_posts = []
-        for uname, caption, tags, topic, sent, sent_conf, emo, emo_conf in all_to_seed:
+        for uname, caption, tags, topic, sent, sent_conf, emo, emo_conf in base_posts:
             author = creator_objs.get(uname) or demo_user
             p = Post(
                 author_id=author.id,
@@ -245,25 +210,21 @@ def seed_database():
             created_posts.append(p)
         db.session.commit()
 
-        # Seed initial interactions and likes for demo user so feeds and analytics look alive
+        # Follow creators and seed initial likes
         if demo_user and created_posts:
-            # Follow creators
             for creator in creator_objs.values():
                 if creator.id != demo_user.id:
                     if not Follow.query.filter_by(follower_id=demo_user.id, following_id=creator.id).first():
                         db.session.add(Follow(follower_id=demo_user.id, following_id=creator.id))
             
-            # Like and interact with a few posts
-            for idx, p in enumerate(created_posts[:6]):
+            for p in created_posts[:5]:
                 db.session.add(Like(user_id=demo_user.id, post_id=p.id))
                 db.session.add(Interaction(user_id=demo_user.id, post_id=p.id, event_type="like"))
-                db.session.add(Interaction(user_id=demo_user.id, post_id=p.id, event_type="view", duration_seconds=18.5))
+                db.session.add(Interaction(user_id=demo_user.id, post_id=p.id, event_type="view", duration_seconds=15.0))
             
-            # Add sample comments
             p0 = created_posts[0]
-            db.session.add(Comment(post_id=p0.id, user_id=demo_user.id, text="The resolution on these infrared images is truly mind-blowing! ✨"))
+            db.session.add(Comment(post_id=p0.id, user_id=demo_user.id, text="Sub-15ms local inference is a huge milestone for user privacy! 🚀"))
             
-            # Join community
             first_comm = Community.query.first()
             if first_comm:
                 db.session.add(CommunityMember(community_id=first_comm.id, user_id=demo_user.id))

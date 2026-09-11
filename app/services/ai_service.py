@@ -4,7 +4,7 @@ import json
 
 def generate_ai_response(prompt, context):
     """
-    Cosmos AI Copilot engine:
+    SocialSentinel AI Copilot engine:
     1. Attempts local Ollama if configured and running.
     2. Falls back cleanly to intelligent, grounded local AI synthesis when Ollama is unavailable.
     """
@@ -14,7 +14,7 @@ def generate_ai_response(prompt, context):
     # Try Ollama with strict 3-second timeout
     try:
         system = (
-            "You are Cosmos AI Copilot, the intelligent conversational assistant for Cosmos Social. "
+            "You are SocialSentinel AI Copilot, the intelligent assistant for the SocialSentinel platform. "
             "Answer directly and helpfully from the supplied application context. Never invent facts."
         )
         payload = {
@@ -33,28 +33,28 @@ def generate_ai_response(prompt, context):
     except Exception:
         pass
 
-    # Intelligent grounded fallback
+    # Grounded local fallback
     p_lower = (prompt or "").lower()
     
     if "why" in p_lower or "recommend" in p_lower:
         signals = context.get("signals", {})
         post = context.get("post", {})
-        topic = post.get("topic", "Technology")
+        topic = post.get("topic", "AI & Tech")
         prior = signals.get("prior_topic_interactions", 0)
         
         if prior > 0:
             return (
-                f"✨ Recommended because of your demonstrated affinity for #{topic} "
-                f"({prior} previous interactions recorded). The Cosmos hybrid ranker prioritized this "
-                f"based on content TF-IDF semantic alignment and community engagement velocity.",
-                "cosmos-hybrid-grounded"
+                f"🛡️ Recommended because of your demonstrated affinity for #{topic} "
+                f"({prior} previous interactions recorded). The SocialSentinel hybrid ranker prioritized this "
+                f"based on TF-IDF semantic alignment and community engagement velocity.",
+                "sentinel-hybrid-grounded"
             )
         else:
             return (
-                f"✨ Featured to encourage exploration into #{topic}. "
-                f"Your serendipity settings allow Cosmos to surface trending and diverse content "
+                f"🛡️ Featured to encourage topic exploration into #{topic}. "
+                f"Your serendipity settings allow SocialSentinel to surface high-signal content "
                 f"outside your standard engagement bubble.",
-                "cosmos-serendipity-grounded"
+                "sentinel-serendipity-grounded"
             )
             
     if "interest" in p_lower or "topic" in p_lower:
@@ -63,30 +63,30 @@ def generate_ai_response(prompt, context):
             top = sorted(topics.items(), key=lambda x: x[1], reverse=True)[:3]
             top_str = ", ".join(f"#{k} ({v} interactions)" for k, v in top)
             return (
-                f"📊 Based on your Cosmos activity, your top topic interests are currently: {top_str}. "
-                f"Your feed dynamically boosts high-engagement posts within these topics.",
-                "cosmos-analytics-grounded"
+                f"📊 Based on your SocialSentinel activity, your top topic interests are: {top_str}. "
+                f"Your feed dynamically balances high-signal content within these areas.",
+                "sentinel-analytics-grounded"
             )
         else:
             return (
-                "🌌 You're just starting your journey on Cosmos! Your top interests will populate automatically "
+                "🛡️ Welcome to SocialSentinel! Your top interests will dynamically populate "
                 "as you like, comment, save posts, and join communities.",
-                "cosmos-analytics-grounded"
+                "sentinel-analytics-grounded"
             )
             
     if "sentiment" in p_lower or "mood" in p_lower:
         return (
-            "🪐 Cosmos analyzes tone across posts using a local Scikit-Learn TF-IDF Random Forest engine. "
-            "This empowers you to steer your feed toward constructive, inspiring, and high-energy content.",
-            "cosmos-nlp-grounded"
+            "🛡️ SocialSentinel analyzes tone and emotion across posts using a local Scikit-Learn TF-IDF engine. "
+            "This empowers you to steer your feed toward constructive, inspiring, and high-signal content.",
+            "sentinel-nlp-grounded"
         )
 
     # General conversational query
     user_info = context.get("user", {})
     name = user_info.get("display_name") or user_info.get("username") or "Explorer"
     return (
-        f"👋 Hello {name}! I am Cosmos AI Copilot. I analyze your interaction graph, topic affinities, "
-        f"and content sentiments in real-time to tailor your feed and answer questions about platform recommendations. "
+        f"👋 Hello {name}! I am SocialSentinel AI Copilot. I analyze your interaction graph, topic affinities, "
+        f"and content sentiments in real-time to personalize your feed and explain recommendations. "
         f"Try asking: 'Why was this post recommended to me?' or 'What are my top interests?'",
-        "cosmos-copilot-grounded"
+        "sentinel-copilot-grounded"
     )

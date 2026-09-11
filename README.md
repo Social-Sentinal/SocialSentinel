@@ -1,41 +1,41 @@
-# ✨ Cosmos Social — AI-Powered Social Universe
+# 🛡️ SocialSentinel — AI-Powered Social Intelligence Network
 
-Cosmos is a modern, database-backed social platform featuring real-time direct messaging, intelligent hybrid recommendations (content-based TF-IDF + collaborative filtering + serendipity & diversity exploration), instant scikit-learn sentiment analysis, dark/light themes, and dynamic data seeding.
+SocialSentinel is a modern, production-ready social media platform featuring real-time direct messaging, intelligent hybrid recommendations (content-based TF-IDF + collaborative filtering + diversity exploration), lightning-fast Scikit-Learn sentiment analysis, dark/light themes, and dynamic database seeding.
 
 ---
 
 ## 🌟 Key Features
 
 1. **Intelligent Hybrid Recommendations**:
-   - Multi-signal ranking algorithm combining content TF-IDF cosine similarity, collaborative engagement weights (like: 4, save: 5, share: 4, comment: 3), creator affinity, social follow graphs, and recency decay.
-   - **Serendipity & Diversity Engine**: Break echo chambers with adjustable exploration sliders and serendipity feeds to surface unexpected, diverse topics.
-   - **Explainable AI**: Grounded rationale badges on every post ("🎯 88% Match · Based on your #Astrophysics engagement").
+   - Multi-signal ranking algorithm combining content TF-IDF cosine similarity, collaborative engagement weights (like: 4, save: 5, share: 4, comment: 3), creator affinity, following graphs, and recency decay.
+   - **Discovery & Diversity Engine**: Prevents echo chambers with an adjustable discovery slider and diverse feeds to surface high-signal topics.
+   - **Explainable AI**: Transparent rationale badges on every post ("🛡️ 88% Match · Based on your #AI interest").
 
 2. **Lightning-Fast Sentiment & Emotion Analysis**:
    - Powered by local Scikit-Learn Random Forest and TF-IDF models (`models/sentiment_model.pkl` + `models/tfidf_vectorizer.pkl`) with lexicon polarity refinement.
-   - Zero heavyweight transformer downloads required at runtime.
-   - Real-time tone feedback during post authoring and interactive AI Studio inspector.
+   - Zero runtime transformer weight downloads required.
+   - Real-time tone feedback during post authoring and an interactive AI Studio NLP inspector.
 
 3. **Direct Messaging & One-Click Post Sharing**:
    - Two-column Direct Messenger with real-time polling, conversation switcher, and user search.
    - One-click "Share to Chat" modal allowing instant sharing of any post into conversation threads with live previews.
 
-4. **Cosmos Communities**:
-   - Topic hubs including *Astrophysics & Cosmos*, *AI & Tech*, *Web Dev*, *Creative Arts*, and *Mindfulness*.
+4. **SocialSentinel Communities**:
+   - Topic hubs including *AI & Tech*, *Cybersecurity & Privacy*, *Web Engineering*, *Creative Tech & Design*, and *Digital Wellbeing*.
    - Instant 1-click Join/Leave with live member and post metrics.
 
 5. **Grounded AI Copilot**:
-   - Seamlessly integrates with local Ollama (`llama3.2:3b`) when active, with intelligent grounded fallbacks so queries never crash when offline.
+   - Integrates with local Ollama (`llama3.2:3b`) when available, with intelligent grounded fallbacks so queries never crash when offline.
 
 6. **Bulletproof Visuals & Theming**:
-   - Inline SVG gradient generator guarantees beautiful avatar and media rendering on any offline or firewalled machine.
+   - Inline SVG gradient generator guarantees clean avatar and media rendering on any offline or firewalled machine.
    - Sleek Dark and Light themes with persistent user preferences.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 18, Vite, Lucide Icons, Vanilla CSS Design System with custom properties and responsive 3-column layout.
+- **Frontend**: React 18, Vite, Lucide Icons, Vanilla CSS Design System with custom properties and responsive layout.
 - **Backend**: Flask 3, Flask-SQLAlchemy, Flask-JWT-Extended, Flask-Limiter, Flask-CORS.
 - **Machine Learning**: Scikit-Learn, Joblib, TF-IDF Vectorization, Cosine Similarity, Heuristic Pattern Detection.
 - **Database**: SQLite (local development) / PostgreSQL (production).
@@ -91,7 +91,7 @@ The Flask server automatically serves `frontend/dist` as a Single Page Applicati
 The platform automatically seeds rich sample data and a demo user if the database is sparse:
 - **Username**: `demo`
 - **Password**: `Demo1234!`
-- Or simply click **"🚀 Try Demo Account (Cosmos Explorer)"** on the login screen for instant 1-click access!
+- Or simply click **"🚀 Try Demo Account (Sentinel Explorer)"** on the login screen for instant 1-click access!
 
 ---
 
