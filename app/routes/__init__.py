@@ -1,1 +1,1 @@
-# Routes package initializer
+"""API route package."""

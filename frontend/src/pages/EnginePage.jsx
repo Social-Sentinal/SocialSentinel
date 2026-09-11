@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, Compass, Layers, CheckCircle2, Sliders, Cpu, ShieldCheck } from 'lucide-react';
 import MediaImage from '../components/MediaImage';
 import UserProfileModal from '../components/UserProfileModal';
@@ -9,7 +9,6 @@ export default function EnginePage({ onInspectPost }) {
   const [userInput, setUserInput] = useState('career success interview hacks motivation');
   const [recommendations, setRecommendations] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasRun, setHasRun] = useState(false);
   const [selectedUsername, setSelectedUsername] = useState(null);
 
   // Interactive Algorithm Weights
@@ -24,13 +23,12 @@ export default function EnginePage({ onInspectPost }) {
     'startup founding product design',
   ];
 
-  const handleRunRecommendation = async (overrideQuery) => {
+  const handleRunRecommendation = async (overrideQuery, modelChoice = activeModel) => {
     const queryToUse = overrideQuery || userInput;
     setIsLoading(true);
-    setHasRun(true);
 
     try {
-      if (activeModel === 'content') {
+      if (modelChoice === 'content') {
         const res = await fetchContentRecommendations(queryToUse);
         if (res.status === 'success' && Array.isArray(res.data)) {
           setRecommendations(res.data);
@@ -48,16 +46,22 @@ export default function EnginePage({ onInspectPost }) {
     }
   };
 
+  // Auto-run on page load and when model choice changes
+  useEffect(() => {
+    handleRunRecommendation(userInput, activeModel);
+  }, [activeModel]);
+
+  // Dynamically calculate hybrid match percent incorporating user slider hyperparameters
   const calculateMatchPercent = (rec, idx) => {
-    if (rec.similarity !== undefined && !isNaN(rec.similarity)) {
-      return Math.min(99, Math.max(65, Math.round(rec.similarity * 100)));
-    }
-    if (rec.engagement_score !== undefined && !isNaN(rec.engagement_score)) {
-      return Math.min(99, Math.max(65, Math.round(rec.engagement_score * 100)));
-    }
-    // Deterministic realistic ranking score based on index and topic match
-    const baseScores = [96, 92, 88, 85, 81, 78, 74, 71];
-    return baseScores[idx % baseScores.length];
+    const baseSim = (rec.similarity !== undefined && !isNaN(rec.similarity)) ? rec.similarity : 0.75;
+    const baseCollab = (rec.popularity_score !== undefined && !isNaN(rec.popularity_score)) ? rec.popularity_score : 0.70;
+    const baseSteer = (rec.sentiment === 'Positive') ? 0.90 : ((rec.sentiment === 'Negative') ? 0.30 : 0.60);
+
+    const sumWeights = topicWeight + collabWeight + steerWeight || 1.0;
+    const weightedScore = ((topicWeight * baseSim) + (collabWeight * baseCollab) + (steerWeight * baseSteer)) / sumWeights;
+
+    const percent = Math.round(weightedScore * 100);
+    return Math.min(99, Math.max(55, percent));
   };
 
   return (
@@ -71,7 +75,7 @@ export default function EnginePage({ onInspectPost }) {
               <Cpu size={26} color="#EC4899" /> ML Recommendation Engine Visualizer
             </h2>
             <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-              Inspect live Word2Vec semantic embeddings, Collaborative matrix dwell weights, and Sentiment Uplift steering scores.
+              Inspect live Word2Vec semantic embeddings, Collaborative matrix dwell weights, and Sentiment Uplift steering scores in real time.
             </p>
           </div>
 
@@ -102,6 +106,7 @@ export default function EnginePage({ onInspectPost }) {
               background: activeModel === 'content' ? 'linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(59, 130, 246, 0.25))' : 'rgba(255, 255, 255, 0.03)',
               color: activeModel === 'content' ? '#FFFFFF' : 'var(--text-muted)',
               border: activeModel === 'content' ? '1px solid #EC4899' : '1px solid var(--border-color)',
+              transition: 'var(--transition-fast)'
             }}
           >
             <Compass size={18} color={activeModel === 'content' ? '#EC4899' : 'currentColor'} />
@@ -123,6 +128,7 @@ export default function EnginePage({ onInspectPost }) {
               background: activeModel === 'collaborative' ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(6, 182, 212, 0.25))' : 'rgba(255, 255, 255, 0.03)',
               color: activeModel === 'collaborative' ? '#FFFFFF' : 'var(--text-muted)',
               border: activeModel === 'collaborative' ? '1px solid #3B82F6' : '1px solid var(--border-color)',
+              transition: 'var(--transition-fast)'
             }}
           >
             <Layers size={18} color={activeModel === 'collaborative' ? '#3B82F6' : 'currentColor'} />
@@ -133,14 +139,14 @@ export default function EnginePage({ onInspectPost }) {
         {/* Algorithm Weight Sliders */}
         <div style={{ padding: '16px', background: 'rgba(0, 0, 0, 0.2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 700, color: '#EC4899' }}>
-            <Sliders size={16} /> Hybrid Ranking Formula Weight Hyperparameters
+            <Sliders size={16} /> Interactive Hybrid Ranking Formula Weight Hyperparameters
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             <div>
               <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span>Topic Match Weight (w₁)</span>
-                <strong style={{ color: '#FFF' }}>{(topicWeight * 100).toFixed(0)}%</strong>
+                <strong style={{ color: '#EC4899' }}>{(topicWeight * 100).toFixed(0)}%</strong>
               </label>
               <input 
                 type="range" min="0" max="1" step="0.05" 
@@ -153,7 +159,7 @@ export default function EnginePage({ onInspectPost }) {
             <div>
               <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span>Collaborative Weight (w₂)</span>
-                <strong style={{ color: '#FFF' }}>{(collabWeight * 100).toFixed(0)}%</strong>
+                <strong style={{ color: '#3B82F6' }}>{(collabWeight * 100).toFixed(0)}%</strong>
               </label>
               <input 
                 type="range" min="0" max="1" step="0.05" 
@@ -166,7 +172,7 @@ export default function EnginePage({ onInspectPost }) {
             <div>
               <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span>Steering Uplift Weight (w₃)</span>
-                <strong style={{ color: '#FFF' }}>{(steerWeight * 100).toFixed(0)}%</strong>
+                <strong style={{ color: '#10B981' }}>{(steerWeight * 100).toFixed(0)}%</strong>
               </label>
               <input 
                 type="range" min="0" max="1" step="0.05" 
@@ -189,6 +195,7 @@ export default function EnginePage({ onInspectPost }) {
                 placeholder="Enter query topics for similarity calculation..."
                 className="input-field"
                 style={{ fontSize: '0.9rem' }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleRunRecommendation(); }}
               />
               <button 
                 onClick={() => handleRunRecommendation()} 
@@ -217,7 +224,8 @@ export default function EnginePage({ onInspectPost }) {
                     fontSize: '0.75rem',
                     background: 'rgba(255, 255, 255, 0.05)',
                     color: '#EC4899',
-                    border: '1px solid rgba(236, 72, 153, 0.3)'
+                    border: '1px solid rgba(236, 72, 153, 0.3)',
+                    cursor: 'pointer'
                   }}
                 >
                   {q}
@@ -243,12 +251,20 @@ export default function EnginePage({ onInspectPost }) {
       </div>
 
       {/* Grid Results */}
-      {hasRun && (
+      {isLoading ? (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+          Computing Word2Vec vector similarities & rank probabilities...
+        </div>
+      ) : recommendations.length === 0 ? (
+        <div className="insta-card" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+          No recommendation items found for this query.
+        </div>
+      ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
           {recommendations.map((rec, idx) => {
             const matchScore = calculateMatchPercent(rec, idx);
             return (
-              <div key={idx} className="insta-card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <div key={rec.id || idx} className="insta-card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <div 
                   onClick={() => onInspectPost && onInspectPost(rec)}
                   style={{ position: 'relative', width: '100%', aspectRatio: '1/1', backgroundColor: '#000', cursor: 'pointer' }}
@@ -282,13 +298,13 @@ export default function EnginePage({ onInspectPost }) {
                       padding: '3px 8px',
                       background: 'rgba(0, 0, 0, 0.75)',
                       backdropFilter: 'blur(6px)',
-                      color: rec.sentiment === 'Positive' ? '#34D399' : '#FB7185',
+                      color: rec.sentiment === 'Positive' ? '#34D399' : (rec.sentiment === 'Negative' ? '#FB7185' : '#CBD5E1'),
                       fontWeight: 700,
                       fontSize: '0.72rem',
                       borderRadius: 'var(--radius-sm)',
                       border: '1px solid rgba(255,255,255,0.2)'
                     }}>
-                      {rec.sentiment} (+{(rec.score || 0.85).toFixed(2)})
+                      {rec.sentiment}
                     </div>
                   )}
                 </div>
@@ -327,4 +343,3 @@ export default function EnginePage({ onInspectPost }) {
     </div>
   );
 }
-

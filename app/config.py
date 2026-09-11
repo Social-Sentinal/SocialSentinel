@@ -2,27 +2,23 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 DATA_DIR = BASE_DIR / "data"
 MODELS_DIR = BASE_DIR / "models"
-STATIC_DIR = BASE_DIR / "static"
 FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
-
-DB_PATH = DATA_DIR / "app.db"
-
+DATA_DIR.mkdir(exist_ok=True)
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "social-sentinel-secret-key-2026")
-    DEBUG = os.getenv("FLASK_ENV") == "development"
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.getenv("SECRET_KEY", "dev-only-change-me"))
+    JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv("JWT_ACCESS_MINUTES", "30")) * 60
+    JWT_REFRESH_TOKEN_EXPIRES = int(os.getenv("JWT_REFRESH_DAYS", "30")) * 86400
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{DATA_DIR / 'socialsentinel_v4.db'}").replace("postgres://", "postgresql://")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
+    FRONTEND_DIST_DIR = FRONTEND_DIST_DIR
     DATA_DIR = DATA_DIR
     MODELS_DIR = MODELS_DIR
-    FRONTEND_DIST_DIR = FRONTEND_DIST_DIR
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
-    # Instagram API Credentials
-    RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
-    INSTAGRAM_API_KEY = os.getenv("INSTAGRAM_API_KEY", "")
-    APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN", "")
-    INSTAGRAM_API_HOST = os.getenv("INSTAGRAM_API_HOST", "instagram-scraper-2022.p.rapidapi.com")
-
+    REDIS_URL = os.getenv("REDIS_URL", "")
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+    CORS_ORIGINS = [x.strip() for x in os.getenv("CORS_ORIGINS", "*").split(",") if x.strip()]

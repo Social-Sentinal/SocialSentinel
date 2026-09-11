@@ -1,102 +1,119 @@
-# SocialSentinel
+# ✨ Cosmos Social — AI-Powered Social Universe
 
-SocialSentinel is an intelligent Instagram sentiment analysis and recommendation platform powered by Machine Learning, Natural Language Processing (NLP), and Flask.
-
-## 🚀 Features
-
-- **Sentiment Analysis**: Evaluate post text sentiment (Positive, Neutral, Negative) with confidence scores and distribution breakdown using Scikit-Learn TF-IDF + Random Forest.
-- **Emotion Intensity Detection**: Analyze emotional undertones (Joy, Anger, Sadness, Surprise).
-- **Word Cloud Generator**: Generate visual word clouds for analyzed captions.
-- **Content-Based Recommendations**: Recommend relevant posts using Word2Vec embeddings and Cosine Similarity.
-- **Collaborative Filtering Recommendations**: Suggest predicted captions and hashtags based on historical engagement patterns.
-- **Interactive Engine**: Simulate post viewing, liking, sharing, commenting, and tracking user dwell time.
-- **API Dashboard**: View summarized post sentiment metrics and prediction outputs.
+Cosmos is a modern, database-backed social platform featuring real-time direct messaging, intelligent hybrid recommendations (content-based TF-IDF + collaborative filtering + serendipity & diversity exploration), instant scikit-learn sentiment analysis, dark/light themes, and dynamic data seeding.
 
 ---
 
-## 📁 Repository Structure
+## 🌟 Key Features
 
+1. **Intelligent Hybrid Recommendations**:
+   - Multi-signal ranking algorithm combining content TF-IDF cosine similarity, collaborative engagement weights (like: 4, save: 5, share: 4, comment: 3), creator affinity, social follow graphs, and recency decay.
+   - **Serendipity & Diversity Engine**: Break echo chambers with adjustable exploration sliders and serendipity feeds to surface unexpected, diverse topics.
+   - **Explainable AI**: Grounded rationale badges on every post ("🎯 88% Match · Based on your #Astrophysics engagement").
+
+2. **Lightning-Fast Sentiment & Emotion Analysis**:
+   - Powered by local Scikit-Learn Random Forest and TF-IDF models (`models/sentiment_model.pkl` + `models/tfidf_vectorizer.pkl`) with lexicon polarity refinement.
+   - Zero heavyweight transformer downloads required at runtime.
+   - Real-time tone feedback during post authoring and interactive AI Studio inspector.
+
+3. **Direct Messaging & One-Click Post Sharing**:
+   - Two-column Direct Messenger with real-time polling, conversation switcher, and user search.
+   - One-click "Share to Chat" modal allowing instant sharing of any post into conversation threads with live previews.
+
+4. **Cosmos Communities**:
+   - Topic hubs including *Astrophysics & Cosmos*, *AI & Tech*, *Web Dev*, *Creative Arts*, and *Mindfulness*.
+   - Instant 1-click Join/Leave with live member and post metrics.
+
+5. **Grounded AI Copilot**:
+   - Seamlessly integrates with local Ollama (`llama3.2:3b`) when active, with intelligent grounded fallbacks so queries never crash when offline.
+
+6. **Bulletproof Visuals & Theming**:
+   - Inline SVG gradient generator guarantees beautiful avatar and media rendering on any offline or firewalled machine.
+   - Sleek Dark and Light themes with persistent user preferences.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18, Vite, Lucide Icons, Vanilla CSS Design System with custom properties and responsive 3-column layout.
+- **Backend**: Flask 3, Flask-SQLAlchemy, Flask-JWT-Extended, Flask-Limiter, Flask-CORS.
+- **Machine Learning**: Scikit-Learn, Joblib, TF-IDF Vectorization, Cosine Similarity, Heuristic Pattern Detection.
+- **Database**: SQLite (local development) / PostgreSQL (production).
+- **Deployment**: Render-ready (`render.yaml`, `build.sh`, Gunicorn).
+
+---
+
+## 🚀 Quickstart
+
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+
+### 1. Backend Setup
+```bash
+# Clone and enter directory
+cd SocialSentinel
+
+# Create & activate virtual environment
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# Linux/macOS:
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run server (database seeds automatically on first launch)
+python run.py
 ```
-SocialSentinel/
-├── app/                        # Main Application Package
-│   ├── config.py               # Path configurations & settings
-│   ├── routes/                 # Flask Blueprints (Modular Handlers)
-│   │   ├── main_routes.py      # Page views (/, engine, sentiments, contact, reports, api)
-│   │   ├── sentiment_routes.py # REST endpoints for sentiment analysis & emotions
-│   │   └── recommend_routes.py # REST endpoints for post recommendations & interaction tracking
-│   ├── services/               # Core Business & Machine Learning Logic
-│   │   ├── sentiment_service.py # TF-IDF & Random Forest classification logic
-│   │   ├── content_service.py   # Word2Vec content similarity service
-│   │   ├── collab_service.py    # Collaborative model evaluation service
-│   │   └── api_service.py       # TextBlob sentiment & API post helpers
-│   └── utils/                  # Shared Utility Modules
-│       ├── data_loader.py       # Centralized model and CSV dataset loaders
-│       ├── text_utils.py        # NLP text cleaning & preprocessing
-│       └── post_generator.py    # Mock social post generator
-├── data/                       # Consolidated Datasets (.csv)
-├── models/                     # Trained ML Models & Vectorizers (.pkl, .model)
-├── notebooks/                  # Experimental Jupyter Notebooks
-├── scripts/                    # Utility & Scraper Scripts
-├── static/                     # CSS, JS, Vendor, and Image Assets
-├── templates/                  # Jinja2 HTML Templates
-├── Procfile                    # Web process configuration for Render/PaaS
-├── render.yaml                 # Render Blueprint deployment configuration
-├── build.sh                    # Build script for Render deployment
-├── run.py                      # Flask Application Launcher
-├── requirements.txt            # Python Package Dependencies
-└── README.md                   # Project Documentation
+Backend API will be available at `http://127.0.0.1:5000`.
+
+### 2. Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
 ```
+Frontend development server will run at `http://localhost:5173`.
+
+### 3. Production Build
+```bash
+cd frontend
+npm run build
+```
+The Flask server automatically serves `frontend/dist` as a Single Page Application at `http://127.0.0.1:5000/`.
 
 ---
 
-## 🛠️ Installation & Local Setup
+## 🧪 Demo Credentials
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/Social-Sentinal/SocialSentinel.git
-   cd SocialSentinel
-   ```
-
-2. **Set up a Virtual Environment**:
-   ```bash
-   python -m venv venv
-   # On Windows:
-   venv\Scripts\activate
-   # On Linux/macOS:
-   source venv/bin/activate
-   ```
-
-3. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Run the Flask Application**:
-   ```bash
-   python run.py
-   ```
-   Open your browser and navigate to `http://127.0.0.1:5000`.
+The platform automatically seeds rich sample data and a demo user if the database is sparse:
+- **Username**: `demo`
+- **Password**: `Demo1234!`
+- Or simply click **"🚀 Try Demo Account (Cosmos Explorer)"** on the login screen for instant 1-click access!
 
 ---
 
-## 🌐 Deploy to Render (render.com)
+## 📡 API Endpoints
 
-1. Log in to [Render](https://render.com/).
-2. Click **New +** -> **Web Service** (or **Blueprint**).
-3. Connect your GitHub repository `SocialSentinel`.
-4. Render will automatically detect `render.yaml` or you can manually configure:
-   - **Environment**: `Python 3`
-   - **Build Command**: `./build.sh` (or `pip install -r requirements.txt`)
-   - **Start Command**: `gunicorn "run:app"`
-5. Click **Create Web Service**. Render will build and deploy your application live!
+All APIs are prefixed with `/api/v1`:
+
+- **Auth**: `POST /auth/register`, `POST /auth/login`, `POST /auth/demo`, `POST /auth/refresh`
+- **User**: `GET /users/me`, `PUT /users/me`, `PUT /users/preferences`, `POST /users/:id/follow`
+- **Feed & Posts**: `GET /posts`, `POST /posts`, `GET /recommendations/feed`, `GET /recommendations/serendipity`, `POST /posts/:id/:action` (`like`, `save`, `share`, `view`)
+- **Comments**: `GET /posts/:id/comments`, `POST /posts/:id/comments`
+- **Communities**: `GET /communities`, `POST /communities/:id/join`, `GET /communities/:slug/posts`
+- **Messages**: `GET /conversations`, `POST /conversations`, `GET /conversations/:id/messages`, `POST /conversations/:id/messages`
+- **AI & Sentiment**: `POST /sentiment/predict`, `POST /sentiment/emotion`, `POST /ai/ask`, `GET /ai/explain/:id`
+- **Analytics**: `GET /analytics/overview`
+- **Health**: `GET /health`
 
 ---
 
-## 📖 Key Web Pages
+## ☁️ Deployment
 
-- **Home** (`/`): Overview of the SocialSentinel platform.
-- **Engine** (`/engine.html`): Interactive feed simulating user engagement and recording view duration.
-- **Sentiment Analysis** (`/sentiments.html`): Input custom text to analyze sentiment polarity, confidence score, and emotion intensity.
-- **Content Recommendations** (`/contact.html`): Input topics/keywords to receive personalized post recommendations based on Word2Vec similarity.
-- **Collaborative Recommendations** (`/reports.html`): View predicted captions and hashtags generated by trained ML models based on user activity.
-- **API Dashboard** (`/api.html`): View summarized sentiment scores and engagement predictions.
+Deployable to **Render** in 1-click using the included `render.yaml`:
+1. Connect GitHub repository to Render.
+2. Render detects `render.yaml` and executes `bash build.sh`.
+3. Health check at `/health` ensures seamless zero-downtime deployments.

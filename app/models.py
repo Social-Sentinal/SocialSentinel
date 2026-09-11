@@ -1,210 +1,142 @@
-from datetime import datetime
+from datetime import datetime, timezone
+import json
 from app.extensions import db
+import bcrypt
 
+def utcnow(): return datetime.now(timezone.utc)
 
-class UserProfile(db.Model):
-    __tablename__ = "user_profiles"
+class User(db.Model):
+    __tablename__="users"
+    id=db.Column(db.Integer,primary_key=True)
+    username=db.Column(db.String(40),unique=True,nullable=False,index=True)
+    email=db.Column(db.String(255),unique=True,nullable=False,index=True)
+    password_hash=db.Column(db.String(255),nullable=False)
+    display_name=db.Column(db.String(120),nullable=False)
+    bio=db.Column(db.Text,default="")
+    avatar_url=db.Column(db.String(1000))
+    created_at=db.Column(db.DateTime,default=utcnow,nullable=False,index=True)
+    updated_at=db.Column(db.DateTime,default=utcnow,onupdate=utcnow)
+    preferences=db.relationship("UserPreference",backref="user",uselist=False,cascade="all,delete-orphan")
+    def set_password(self,p): self.password_hash=bcrypt.hashpw(p.encode(),bcrypt.gensalt()).decode()
+    def check_password(self,p): return bcrypt.checkpw(p.encode(),self.password_hash.encode())
+    def to_dict(self,private=False):
+        d={"id":self.id,"username":self.username,"email":self.email if private else None,"display_name":self.display_name,"bio":self.bio or "","avatar_url":self.avatar_url,"created_at":self.created_at.isoformat()}
+        d["followers_count"]=Follow.query.filter_by(following_id=self.id).count()
+        d["following_count"]=Follow.query.filter_by(follower_id=self.id).count()
+        d["posts_count"]=Post.query.filter_by(author_id=self.id).count()
+        return d
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False, index=True)
-    full_name = db.Column(db.String(128), nullable=True, default="")
-    user_avatar = db.Column(db.String(512), nullable=True)
-    followers_count = db.Column(db.Integer, default=0)
-    following_count = db.Column(db.Integer, default=0)
-    posts_count = db.Column(db.Integer, default=0)
-    biography = db.Column(db.Text, nullable=True, default="")
-    external_url = db.Column(db.String(255), nullable=True, default="")
-    is_verified = db.Column(db.Boolean, default=False)
-    timestamp = db.Column(db.String(64), default=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "username": self.username,
-            "full_name": self.full_name or self.username,
-            "user_avatar": self.user_avatar or "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-            "followers_count": self.followers_count,
-            "following_count": self.following_count,
-            "posts_count": self.posts_count,
-            "biography": self.biography or "No bio provided.",
-            "external_url": self.external_url or "",
-            "is_verified": self.is_verified,
-            "timestamp": self.timestamp
-        }
-
+class UserPreference(db.Model):
+    __tablename__="user_preferences"
+    id=db.Column(db.Integer,primary_key=True)
+    user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),unique=True,nullable=False)
+    preferred_topics=db.Column(db.Text,default="Technology,AI,Programming")
+    exploration_rate=db.Column(db.Float,default=.15)
+    theme=db.Column(db.String(20),default="system")
+    def topics(self): return [x.strip() for x in (self.preferred_topics or "").split(",") if x.strip()]
+    def to_dict(self): return {"preferred_topics":self.topics(),"exploration_rate":self.exploration_rate,"theme":self.theme}
 
 class Post(db.Model):
-    __tablename__ = "posts"
+    __tablename__="posts"
+    id=db.Column(db.Integer,primary_key=True)
+    author_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False,index=True)
+    caption=db.Column(db.Text,nullable=False)
+    hashtags=db.Column(db.String(1000),default="")
+    media_url=db.Column(db.String(1000))
+    topic_category=db.Column(db.String(80),default="General",index=True)
+    sentiment=db.Column(db.String(32),default="Neutral",index=True)
+    sentiment_confidence=db.Column(db.Float,default=0)
+    emotion=db.Column(db.String(32),default="neutral",index=True)
+    emotion_confidence=db.Column(db.Float,default=0)
+    embedding=db.Column(db.Text)
+    created_at=db.Column(db.DateTime,default=utcnow,index=True)
+    updated_at=db.Column(db.DateTime,default=utcnow,onupdate=utcnow)
+    author=db.relationship("User",backref=db.backref("posts",lazy=True))
+    def counts(self):
+        return {"likes":Like.query.filter_by(post_id=self.id).count(),"comments":Comment.query.filter_by(post_id=self.id).count(),"saves":Save.query.filter_by(post_id=self.id).count(),"shares":Share.query.filter_by(post_id=self.id).count(),"views":Interaction.query.filter_by(post_id=self.id,event_type="view").count()}
+    def to_dict(self,viewer=None):
+        c=self.counts()
+        return {"id":self.id,"author":self.author.to_dict(),"caption":self.caption,"hashtags":self.hashtags or "","media_url":self.media_url,"topic":self.topic_category,"sentiment":self.sentiment,"sentiment_confidence":self.sentiment_confidence,"emotion":self.emotion,"emotion_confidence":self.emotion_confidence,"created_at":self.created_at.isoformat(),"counts":c,"liked":bool(viewer and Like.query.filter_by(post_id=self.id,user_id=viewer).first()),"saved":bool(viewer and Save.query.filter_by(post_id=self.id,user_id=viewer).first())}
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), default="humansofny", index=True)
-    full_name = db.Column(db.String(128), default="Humans of New York")
-    user_avatar = db.Column(db.String(512), default="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80")
-    location = db.Column(db.String(128), default="New York, NY")
-    caption = db.Column(db.Text, nullable=False)
-    hashtags = db.Column(db.String(255), nullable=True)
-    image_url = db.Column(db.String(512), nullable=True)
-    likes_count = db.Column(db.Integer, default=1240)
-    comments_count = db.Column(db.Integer, default=85)
-    views_count = db.Column(db.Integer, default=3420)
-    follower_count = db.Column(db.Integer, default=242500)
-    biography = db.Column(db.Text, nullable=True, default="Stories from everyday people.")
-    external_url = db.Column(db.String(255), nullable=True, default="https://instagram.com")
-    timestamp = db.Column(db.String(64), nullable=True)
-    sentiment = db.Column(db.String(32), default="Neutral", index=True)
-    score = db.Column(db.Float, default=0.5)
-    is_verified = db.Column(db.Boolean, default=True)
-
-    topic_category = db.Column(db.String(64), default="General", index=True)
-    comments = db.relationship("Comment", backref="post", lazy=True, cascade="all, delete-orphan")
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "username": self.username or "humansofny",
-            "full_name": self.full_name or self.username or "Humans of New York",
-            "user_avatar": self.user_avatar or "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-            "location": self.location or "New York, NY",
-            "caption": self.caption,
-            "hashtags": self.hashtags or "#life #story",
-            "image_url": self.image_url or "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&auto=format&fit=crop&q=80",
-            "likes_count": self.likes_count,
-            "comments_count": len(self.comments) if self.comments else self.comments_count,
-            "views_count": self.views_count,
-            "follower_count": self.follower_count or 10000,
-            "biography": self.biography or "Instagram creator & storyteller",
-            "external_url": self.external_url or "https://instagram.com",
-            "timestamp": self.timestamp or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "sentiment": self.sentiment,
-            "score": round(self.score, 2),
-            "topic_category": self.topic_category or "General",
-            "is_verified": self.is_verified,
-            "prediction": "Likely to engage" if self.sentiment == "Positive" else "Less likely to engage",
-            "comments_list": [c.to_dict() for c in self.comments[-5:]] if self.comments else [],
-            "url": f"https://instagram.com/p/post_{self.id}"
-        }
-
-
-
+class Like(db.Model):
+    __tablename__="likes"; id=db.Column(db.Integer,primary_key=True); user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False); post_id=db.Column(db.Integer,db.ForeignKey("posts.id",ondelete="CASCADE"),nullable=False); created_at=db.Column(db.DateTime,default=utcnow); __table_args__=(db.UniqueConstraint("user_id","post_id",name="uq_like"),)
+class Save(db.Model):
+    __tablename__="saves"; id=db.Column(db.Integer,primary_key=True); user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False); post_id=db.Column(db.Integer,db.ForeignKey("posts.id",ondelete="CASCADE"),nullable=False); created_at=db.Column(db.DateTime,default=utcnow); __table_args__=(db.UniqueConstraint("user_id","post_id",name="uq_save"),)
+class Share(db.Model):
+    __tablename__="shares"; id=db.Column(db.Integer,primary_key=True); user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False); post_id=db.Column(db.Integer,db.ForeignKey("posts.id",ondelete="CASCADE"),nullable=False); created_at=db.Column(db.DateTime,default=utcnow)
+class Follow(db.Model):
+    __tablename__="follows"; id=db.Column(db.Integer,primary_key=True); follower_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False,index=True); following_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False,index=True); created_at=db.Column(db.DateTime,default=utcnow); __table_args__=(db.UniqueConstraint("follower_id","following_id",name="uq_follow"),db.CheckConstraint("follower_id <> following_id",name="ck_no_self_follow"))
 class Comment(db.Model):
-    __tablename__ = "comments"
+    __tablename__="comments"; id=db.Column(db.Integer,primary_key=True); post_id=db.Column(db.Integer,db.ForeignKey("posts.id",ondelete="CASCADE"),nullable=False,index=True); user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False); text=db.Column(db.Text,nullable=False); created_at=db.Column(db.DateTime,default=utcnow)
+    def to_dict(self): return {"id":self.id,"post_id":self.post_id,"user":User.query.get(self.user_id).to_dict(),"text":self.text,"created_at":self.created_at.isoformat()}
 
-    id = db.Column(db.Integer, primary_key=True)
-    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=False)
-    username = db.Column(db.String(64), default="user_visitor")
-    user_avatar = db.Column(db.String(512), default="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80")
-    text = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.String(64), default=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+class Interaction(db.Model):
+    __tablename__="interactions"; id=db.Column(db.Integer,primary_key=True); user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False,index=True); post_id=db.Column(db.Integer,db.ForeignKey("posts.id",ondelete="CASCADE"),nullable=False,index=True); event_type=db.Column(db.String(32),nullable=False,index=True); duration_seconds=db.Column(db.Float,default=0); session_id=db.Column(db.String(128)); created_at=db.Column(db.DateTime,default=utcnow,index=True)
 
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "post_id": self.post_id,
-            "username": self.username,
-            "user_avatar": self.user_avatar,
-            "text": self.text,
-            "timestamp": self.timestamp
-        }
-
-
-class UserInteraction(db.Model):
-    __tablename__ = "user_interactions"
-
-    id = db.Column(db.Integer, primary_key=True)
-    post_id = db.Column(db.Integer, nullable=True)
-    caption = db.Column(db.Text, nullable=True)
-    hashtags = db.Column(db.String(255), nullable=True)
-    view_duration = db.Column(db.Float, default=0.0)
-    liked = db.Column(db.Boolean, default=False)
-    saved = db.Column(db.Boolean, default=False)
-    shared = db.Column(db.Boolean, default=False)
-    comment_text = db.Column(db.Text, nullable=True)
-    timestamp = db.Column(db.String(64), default=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "post_id": self.post_id,
-            "caption": self.caption or "",
-            "hashtags": self.hashtags or "",
-            "view_duration": round(self.view_duration, 2),
-            "liked": self.liked,
-            "saved": self.saved,
-            "shared": self.shared,
-            "comment_text": self.comment_text or "",
-            "timestamp": self.timestamp
-        }
-
-
-class SentimentLog(db.Model):
-    __tablename__ = "sentiment_logs"
-
-    id = db.Column(db.Integer, primary_key=True)
-    input_text = db.Column(db.Text, nullable=False)
-    sentiment = db.Column(db.String(32), nullable=False)
-    confidence = db.Column(db.Float, default=0.0)
-    positive_score = db.Column(db.Float, default=0.0)
-    neutral_score = db.Column(db.Float, default=0.0)
-    negative_score = db.Column(db.Float, default=0.0)
-    timestamp = db.Column(db.String(64), default=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=True)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "input_text": self.input_text,
-            "sentiment": self.sentiment,
-            "confidence": round(self.confidence, 4),
-            "distribution": {
-                "positive": round(self.positive_score, 2),
-                "neutral": round(self.neutral_score, 2),
-                "negative": round(self.negative_score, 2)
-            },
-            "timestamp": self.timestamp
-        }
-
-
-class UserInterestProfile(db.Model):
-    __tablename__ = "user_interest_profiles"
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), default="user_visitor", unique=True, index=True)
-    wellbeing_score = db.Column(db.Float, default=78.5) # 0-100 score
-    preferred_topics = db.Column(db.String(255), default="Career,Self Growth,Technology,Travel")
-    recent_sentiment_bias = db.Column(db.Float, default=0.1) # -1.0 (very negative) to +1.0 (very positive)
-    uplift_mode_enabled = db.Column(db.Boolean, default=True)
-    last_updated = db.Column(db.String(64), default=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "username": self.username,
-            "wellbeing_score": round(self.wellbeing_score, 1),
-            "preferred_topics": self.preferred_topics.split(",") if self.preferred_topics else [],
-            "recent_sentiment_bias": round(self.recent_sentiment_bias, 2),
-            "uplift_mode_enabled": self.uplift_mode_enabled,
-            "last_updated": self.last_updated
-        }
-
+class Recommendation(db.Model):
+    __tablename__="recommendations"; id=db.Column(db.Integer,primary_key=True); user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False,index=True); post_id=db.Column(db.Integer,db.ForeignKey("posts.id",ondelete="CASCADE"),nullable=False); score=db.Column(db.Float,nullable=False); reason=db.Column(db.String(500)); model_version=db.Column(db.String(64)); created_at=db.Column(db.DateTime,default=utcnow,index=True)
 
 class Notification(db.Model):
-    __tablename__ = "notifications"
+    __tablename__="notifications"; id=db.Column(db.Integer,primary_key=True); user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False,index=True); actor_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE")); type=db.Column(db.String(40),nullable=False); post_id=db.Column(db.Integer,db.ForeignKey("posts.id",ondelete="CASCADE")); read=db.Column(db.Boolean,default=False,index=True); created_at=db.Column(db.DateTime,default=utcnow,index=True)
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), default="user_visitor", index=True)
-    title = db.Column(db.String(128), nullable=False)
-    message = db.Column(db.Text, nullable=False)
-    notification_type = db.Column(db.String(32), default="wellbeing") # wellbeing, post, alert
-    is_read = db.Column(db.Boolean, default=False)
-    timestamp = db.Column(db.String(64), default=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
+class Conversation(db.Model):
+    __tablename__="conversations"; id=db.Column(db.Integer,primary_key=True); created_at=db.Column(db.DateTime,default=utcnow)
+class ConversationMember(db.Model):
+    __tablename__="conversation_members"; id=db.Column(db.Integer,primary_key=True); conversation_id=db.Column(db.Integer,db.ForeignKey("conversations.id",ondelete="CASCADE"),nullable=False); user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False); joined_at=db.Column(db.DateTime,default=utcnow); __table_args__=(db.UniqueConstraint("conversation_id","user_id",name="uq_member"),)
+class Message(db.Model):
+    __tablename__="messages"
+    id=db.Column(db.Integer,primary_key=True)
+    conversation_id=db.Column(db.Integer,db.ForeignKey("conversations.id",ondelete="CASCADE"),nullable=False,index=True)
+    sender_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False)
+    body=db.Column(db.Text,nullable=False)
+    shared_post_id=db.Column(db.Integer,db.ForeignKey("posts.id",ondelete="SET NULL"),nullable=True)
+    created_at=db.Column(db.DateTime,default=utcnow,index=True)
+    edited_at=db.Column(db.DateTime)
     def to_dict(self):
+        post=Post.query.get(self.shared_post_id) if self.shared_post_id else None
         return {
-            "id": self.id,
-            "username": self.username,
-            "title": self.title,
-            "message": self.message,
-            "type": self.notification_type,
-            "is_read": self.is_read,
-            "timestamp": self.timestamp
+            "id":self.id,
+            "conversation_id":self.conversation_id,
+            "sender":User.query.get(self.sender_id).to_dict() if self.sender_id else None,
+            "body":self.body,
+            "shared_post_id":self.shared_post_id,
+            "shared_post":post.to_dict() if post else None,
+            "created_at":self.created_at.isoformat()
         }
+
+class Community(db.Model):
+    __tablename__="communities"
+    id=db.Column(db.Integer,primary_key=True)
+    name=db.Column(db.String(80),unique=True,nullable=False)
+    slug=db.Column(db.String(80),unique=True,nullable=False)
+    description=db.Column(db.Text,default="")
+    icon=db.Column(db.String(40),default="🪐")
+    banner_gradient=db.Column(db.String(120),default="linear-gradient(135deg, #6366f1, #a855f7)")
+    created_at=db.Column(db.DateTime,default=utcnow)
+    def to_dict(self,viewer=None):
+        m_count=CommunityMember.query.filter_by(community_id=self.id).count()
+        p_count=Post.query.filter_by(topic_category=self.name).count()
+        is_member=bool(viewer and CommunityMember.query.filter_by(community_id=self.id,user_id=viewer).first())
+        return {
+            "id":self.id,"name":self.name,"slug":self.slug,"description":self.description,
+            "icon":self.icon,"banner_gradient":self.banner_gradient,"members_count":m_count,
+            "posts_count":p_count,"is_member":is_member
+        }
+
+class CommunityMember(db.Model):
+    __tablename__="community_members"
+    id=db.Column(db.Integer,primary_key=True)
+    community_id=db.Column(db.Integer,db.ForeignKey("communities.id",ondelete="CASCADE"),nullable=False)
+    user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False)
+    joined_at=db.Column(db.DateTime,default=utcnow)
+    __table_args__=(db.UniqueConstraint("community_id","user_id",name="uq_comm_member"),)
+
+class AIInsight(db.Model):
+    __tablename__="ai_insights"; id=db.Column(db.Integer,primary_key=True); user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False); prompt=db.Column(db.Text,nullable=False); response=db.Column(db.Text,nullable=False); source=db.Column(db.String(40)); created_at=db.Column(db.DateTime,default=utcnow)
+class ModelVersion(db.Model):
+    __tablename__="model_versions"; id=db.Column(db.Integer,primary_key=True); name=db.Column(db.String(100),nullable=False); version=db.Column(db.String(50),nullable=False); algorithm=db.Column(db.String(120),nullable=False); status=db.Column(db.String(32),default="active"); metrics_json=db.Column(db.Text,default="{}"); created_at=db.Column(db.DateTime,default=utcnow)
+class Report(db.Model):
+    __tablename__="reports"; id=db.Column(db.Integer,primary_key=True); reporter_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False); post_id=db.Column(db.Integer,db.ForeignKey("posts.id",ondelete="CASCADE")); reason=db.Column(db.String(100),nullable=False); details=db.Column(db.Text); status=db.Column(db.String(30),default="open"); created_at=db.Column(db.DateTime,default=utcnow)
+class SearchHistory(db.Model):
+    __tablename__="search_history"; id=db.Column(db.Integer,primary_key=True); user_id=db.Column(db.Integer,db.ForeignKey("users.id",ondelete="CASCADE"),nullable=False); query=db.Column(db.String(300),nullable=False); created_at=db.Column(db.DateTime,default=utcnow)
 

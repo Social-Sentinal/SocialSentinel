@@ -1,11 +1,11 @@
 ## Task-1 -- Completed
 
-1.  Login the rapid api and subscribe the any instagram api 
+1.  Login the rapid api and subscribe the any instagram api
 2.  copy your api key and paste the sentiment python file
-3.  run and analyze the code 
+3.  run and analyze the code
 4.  check different inputs on payload section
 5.  similarly test another python file
- 
+
 ## Task-2 -- Completed
 
 1. Case Study on Sentiment Analysis based on the what types of data is affecting the sentiments and what are the other values which consider in our api which is help on accurate recomadation system. like in this code postive and negative values are show in output so increse the output parameter and check the output.
@@ -13,8 +13,11 @@
 3. Design the Website UI using Given Link on Whatsapp Group.
 
 Test No - 003
+
 <!-- Dataset Atributes -->
+
 ## USER INFO
+
 <!-- {
     "username": "mrbeast",
     "full_name": "MrBeast",
@@ -24,6 +27,7 @@ Test No - 003
 } -->
 
 ## POST INFO
+
 <!-- {
   "id": "3248320768872187912_25025320",
   "media_type": 2,
@@ -56,6 +60,7 @@ Test No - 003
 } -->
 
 ## Query or hastag INFO
+
 <!-- [
   {
     "type": "post",
@@ -100,10 +105,17 @@ Test No - 04
 I can change the approach from top down to bottom up approach.
 Firstly I can retrive the data from the rapid api but in this case i can chage the approach and use it for only recomndation.
 
-
 Test No - 05
 I have multiple datasets but i dont know how to use it challenges complexity and robustness also i donot have any approach.
 then i can prefer cosine simillarity and tfdf.
 
-Test No - 06 
+Test No - 06
 I can use normal dataset and make content based and collaborative system.
+
+Instagram-like frontend → Flask REST API → Database → ML/Recommendation services
+
+And every important action should be dynamic: users, posts, likes, comments, views, sentiment results, recommendations, etc. should be stored in the database and updated through APIs.Layer What you show
+Frontend Feed, login, posts, likes, comments, dashboard
+Backend Flask REST APIs, authentication, CRUD
+Database Users, posts, comments, likes, views, interactions
+AI/ML Sentiment, emotion, content-based, collaborative + hybrid recommendationPrioritize simplicity, correctness, dynamic functionality, clean architecture, and interview explainability over adding unnecessary technologies. make proepr project of this as well for image and profiles and content are not show when i open other systems so make sure resolve this problem with permannet solutions after that commit and push the github.

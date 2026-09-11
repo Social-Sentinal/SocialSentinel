@@ -1,15 +1,26 @@
 services:
   - type: web
-    name: socialsentinel
+    name: cosmos-social
     runtime: python
-    buildCommand: "./build.sh"
-    startCommand: gunicorn "run:app"
+    buildCommand: bash build.sh
+    startCommand: gunicorn --workers 2 --threads 4 --timeout 120 "run:app"
+    healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.4
+        value: 3.11.9
       - key: NODE_VERSION
-        value: 20.11.1
+        value: 20
       - key: SECRET_KEY
         generateValue: true
-      - key: APIFY_API_TOKEN
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
         sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: OLLAMA_BASE_URL
+        value: http://localhost:11434
+      - key: OLLAMA_MODEL
+        value: llama3.2:3b

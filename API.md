@@ -1,0 +1,21 @@
+# API reference
+Authentication: `Authorization: Bearer <access token>`.
+- POST `/api/v1/auth/register` {username,email,password,display_name}
+- POST `/api/v1/auth/login` {email|username,password}
+- POST `/api/v1/auth/refresh` with refresh JWT
+- GET/PUT `/api/v1/users/me`
+- PUT `/api/v1/users/preferences`
+- GET `/api/v1/users/:username`
+- POST `/api/v1/users/:id/follow`
+- GET/POST `/api/v1/posts`
+- PUT/DELETE `/api/v1/posts/:id`
+- POST `/api/v1/posts/:id/like|save|share|view`
+- GET/POST `/api/v1/posts/:id/comments`
+- PUT/DELETE `/api/v1/comments/:id`
+- GET `/api/v1/search?q=...`
+- GET `/api/v1/recommendations/feed`
+- POST `/api/v1/events`
+- GET `/api/v1/analytics/overview`
+- GET `/api/v1/notifications`; POST read endpoints
+- POST `/api/v1/ai/ask`; GET `/api/v1/ai/explain/:id`
+- GET/POST `/api/v1/conversations`; GET/POST `/api/v1/conversations/:id/messages`
