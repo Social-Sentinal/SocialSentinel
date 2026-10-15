@@ -1,6 +1,6 @@
 # 🛡️ SocialSentinel — AI-Powered Social Intelligence Network
 
-SocialSentinel is a modern, production-ready social media platform featuring real-time direct messaging, intelligent hybrid recommendations (content-based TF-IDF + collaborative filtering + diversity exploration), lightning-fast Scikit-Learn sentiment analysis, dark/light themes, and dynamic database seeding.
+SocialSentinel is a production-oriented AI social intelligence network built as a Next.js App Router modular monolith backed by Supabase PostgreSQL, featuring real-time direct messaging, native explainable recommendations, zero-API-cost sentiment and emotion analysis, dark/light themes, and strict database Row Level Security (RLS).
 
 ---
 
@@ -8,112 +8,135 @@ SocialSentinel is a modern, production-ready social media platform featuring rea
 
 1. **Intelligent Hybrid Recommendations**:
    - Multi-signal ranking algorithm combining content TF-IDF cosine similarity, collaborative engagement weights (like: 4, save: 5, share: 4, comment: 3), creator affinity, following graphs, and recency decay.
-   - **Discovery & Diversity Engine**: Prevents echo chambers with an adjustable discovery slider and diverse feeds to surface high-signal topics.
-   - **Explainable AI**: Transparent rationale badges on every post ("🛡️ 88% Match · Based on your #AI interest").
+   - **Diversity & Serendipity Engine**: Prevents echo chambers with an adjustable discovery slider to surface novel, high-signal topics.
+   - **Explainable AI**: Transparent rationale badges on every post (e.g., `🎯 88% Match · Based on your #AI interest`).
 
-2. **Lightning-Fast Sentiment & Emotion Analysis**:
-   - Powered by local Scikit-Learn Random Forest and TF-IDF models (`models/sentiment_model.pkl` + `models/tfidf_vectorizer.pkl`) with lexicon polarity refinement.
-   - Zero runtime transformer weight downloads required.
-   - Real-time tone feedback during post authoring and an interactive AI Studio NLP inspector.
+2. **Native Zero-Cost Sentiment & Emotion Analysis**:
+   - High-performance, zero-latency TypeScript NLP engine matching Scikit-Learn TF-IDF preprocessing with lexicon polarity scoring.
+   - Real-time tone preview during post authoring, network-wide sentiment pulse analytics, and interactive AI Studio inspector.
+   - Emotion classification across 7 dimensions (`joy`, `curiosity`, `wonder`, `inspiration`, `empathy`, `concern`, `sadness`).
 
 3. **Direct Messaging & One-Click Post Sharing**:
-   - Two-column Direct Messenger with real-time polling, conversation switcher, and user search.
+   - Dedicated direct messenger with live Supabase Realtime WebSocket channels, conversation switcher, and user search.
    - One-click "Share to Chat" modal allowing instant sharing of any post into conversation threads with live previews.
 
-4. **SocialSentinel Communities**:
+4. **Topic Communities & Community Pulse**:
    - Topic hubs including *AI & Tech*, *Cybersecurity & Privacy*, *Web Engineering*, *Creative Tech & Design*, and *Digital Wellbeing*.
-   - Instant 1-click Join/Leave with live member and post metrics.
+   - Community Pulse dashboard displaying aggregated discussion sentiment, emotion distribution, and topic velocity.
 
-5. **Grounded AI Copilot**:
-   - Integrates with local Ollama (`llama3.2:3b`) when available, with intelligent grounded fallbacks so queries never crash when offline.
-
-6. **Bulletproof Visuals & Theming**:
-   - Inline SVG gradient generator guarantees clean avatar and media rendering on any offline or firewalled machine.
-   - Sleek Dark and Light themes with persistent user preferences.
+5. **Security & Row Level Security (RLS)**:
+   - Database-enforced Row Level Security on all tables (`profiles`, `posts`, `comments`, `likes`, `bookmarks`, `follows`, `messages`, `reports`).
+   - Secure HTTP-only cookie authentication via `@supabase/ssr` (zero tokens in `localStorage`).
+   - Reporting and content moderation workflows with moderator review capabilities.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Architecture & Tech Stack
 
-- **Frontend**: React 18, Vite, Lucide Icons, Vanilla CSS Design System with custom properties and responsive layout.
-- **Backend**: Flask 3, Flask-SQLAlchemy, Flask-JWT-Extended, Flask-Limiter, Flask-CORS.
-- **Machine Learning**: Scikit-Learn, Joblib, TF-IDF Vectorization, Cosine Similarity, Heuristic Pattern Detection.
-- **Database**: SQLite (local development) / PostgreSQL (production).
-- **Deployment**: Render-ready (`render.yaml`, `build.sh`, Gunicorn).
+| Layer | Technology | Rationale |
+| :--- | :--- | :--- |
+| **Framework** | Next.js 14 (App Router) + TypeScript | React Server Components, Server Actions, Route Handlers, edge-ready performance. |
+| **Styling** | Tailwind CSS + CSS Custom Properties | Utility styling paired with unified dark/light theme CSS custom properties. |
+| **Database & Auth** | Supabase PostgreSQL + `@supabase/ssr` | UUID primary keys, atomic PostgreSQL triggers, RLS policies, HTTP-only cookie auth. |
+| **Realtime** | Supabase Realtime (WebSockets) | Live updates for direct messaging and notifications. |
+| **Testing** | Vitest + React Testing Library | Fast unit and integration tests for recommendation, sentiment, emotion, and validation engines. |
+| **Python Service** | Flask + Scikit-Learn (Optional) | Standalone microservice in `app/` for high-throughput batch ML jobs. |
+
+---
+
+## 📁 Repository Structure
+
+```
+SocialSentinel/
+├── .env                  # Single unified environment configuration
+├── .env.example          # Environment configuration template
+├── docs/                 # Project documentation
+│   ├── architecture.md   # Modular monolith architecture specification
+│   ├── deployment.md     # Production deployment guide (Vercel & Supabase)
+│   └── security.md       # Security, threat model & RLS specifications
+├── src/                  # Next.js App Router codebase
+│   ├── app/              # App Router pages, layouts, and route handlers
+│   ├── components/       # UI components (Feed, Layout, Modals, Posts)
+│   ├── lib/              # Supabase clients (SSR, browser, action) & validation
+│   ├── modules/          # Business domains (AI, Auth, Posts, Messaging, Moderation)
+│   └── types/            # Database entity definitions & PostgreSQL types
+├── supabase/
+│   ├── migrations/       # Production PostgreSQL schema, triggers & RLS policies
+│   └── seed.sql          # Synthetic profiles, posts, and interaction seed data
+├── scripts/
+│   └── seed.mjs          # Programmatic database verification & seed runner
+├── app/                  # Optional standalone Python Flask service
+└── frontend/             # Standalone React/Vite SPA bundle
+```
 
 ---
 
 ## 🚀 Quickstart
 
 ### Prerequisites
-- Python 3.11+
-- Node.js 18+
+- Node.js 18+ (Node.js 20+ recommended)
+- Python 3.11+ (optional, only if running legacy Flask service)
 
-### 1. Backend Setup
+### 1. Environment Configuration
+
+Copy the template to create your `.env` file:
 ```bash
-# Clone and enter directory
-cd SocialSentinel
-
-# Create & activate virtual environment
-python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# Linux/macOS:
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run server (database seeds automatically on first launch)
-python run.py
+cp .env.example .env
 ```
-Backend API will be available at `http://127.0.0.1:5000`.
 
-### 2. Frontend Setup
+Open `.env` and configure your Supabase credentials:
+```ini
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_ENABLE_LOCAL_AI=true
+```
+
+### 2. Install Dependencies
+
 ```bash
-cd frontend
 npm install
+```
+
+### 3. Run Development Server
+
+```bash
 npm run dev
 ```
-Frontend development server will run at `http://localhost:5173`.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 3. Production Build
+### 4. Run Test Suite
+
 ```bash
-cd frontend
+npm run test
+```
+Executes Vitest unit tests verifying the recommendation engine, sentiment inference, emotion pattern matching, and input validations (24/24 tests).
+
+### 5. Production Build
+
+```bash
 npm run build
 ```
-The Flask server automatically serves `frontend/dist` as a Single Page Application at `http://127.0.0.1:5000/`.
+Generates an optimized, statically typed Next.js production build ready for deployment.
 
 ---
 
-## 🧪 Demo Credentials
+## 🧪 Database Setup & Seeding
 
-The platform automatically seeds rich sample data and a demo user if the database is sparse:
-- **Username**: `demo`
-- **Password**: `Demo1234!`
-- Or simply click **"🚀 Try Demo Account (Sentinel Explorer)"** on the login screen for instant 1-click access!
-
----
-
-## 📡 API Endpoints
-
-All APIs are prefixed with `/api/v1`:
-
-- **Auth**: `POST /auth/register`, `POST /auth/login`, `POST /auth/demo`, `POST /auth/refresh`
-- **User**: `GET /users/me`, `PUT /users/me`, `PUT /users/preferences`, `POST /users/:id/follow`
-- **Feed & Posts**: `GET /posts`, `POST /posts`, `GET /recommendations/feed`, `GET /recommendations/serendipity`, `POST /posts/:id/:action` (`like`, `save`, `share`, `view`)
-- **Comments**: `GET /posts/:id/comments`, `POST /posts/:id/comments`
-- **Communities**: `GET /communities`, `POST /communities/:id/join`, `GET /communities/:slug/posts`
-- **Messages**: `GET /conversations`, `POST /conversations`, `GET /conversations/:id/messages`, `POST /conversations/:id/messages`
-- **AI & Sentiment**: `POST /sentiment/predict`, `POST /sentiment/emotion`, `POST /ai/ask`, `GET /ai/explain/:id`
-- **Analytics**: `GET /analytics/overview`
-- **Health**: `GET /health`
+1. **Apply Migrations**:
+   Run [`supabase/migrations/20261015000000_init_socialsentinel.sql`](supabase/migrations/20261015000000_init_socialsentinel.sql) in your [Supabase SQL Editor](https://supabase.com/dashboard).
+2. **Apply Seed Data**:
+   Run [`supabase/seed.sql`](supabase/seed.sql) in your Supabase SQL Editor to populate 35 synthetic creators and 120+ posts.
+3. **Verify Communities**:
+   ```bash
+   npm run db:seed
+   ```
 
 ---
 
-## ☁️ Deployment
+## 📚 Documentation Links
 
-Deployable to **Render** in 1-click using the included `render.yaml`:
-1. Connect GitHub repository to Render.
-2. Render detects `render.yaml` and executes `bash build.sh`.
-3. Health check at `/health` ensures seamless zero-downtime deployments.
+- [System Architecture Specification](docs/architecture.md)
+- [Production Deployment Guide (Vercel & Supabase)](docs/deployment.md)
+- [Security & Compliance Architecture](docs/security.md)
