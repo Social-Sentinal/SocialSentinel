@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import MediaImage from './MediaImage';
-import { Heart, MessageCircle, Share2, Sparkles, X, Send, Compass, Search, Users, Brain, Shield, BarChart3, TrendingUp } from 'lucide-react';
+import { Heart, MessageSquare, Bookmark, Share2, Sparkles } from 'lucide-react';
 
 export function PostCardItem({ post, user, refresh, onOpenShare, onOpenDetail, onExplain }) {
   const [liked, setLiked] = useState(post.liked);
@@ -56,7 +56,7 @@ export function PostCardItem({ post, user, refresh, onOpenShare, onOpenDetail, o
 
         {post.recommendation_reason && (
           <div className="post-justification-chip">
-            <Shield size={12} />
+            <Sparkles size={12} />
             <span>{post.recommendation_reason}</span>
           </div>
         )}
@@ -117,7 +117,7 @@ export function PostCardItem({ post, user, refresh, onOpenShare, onOpenDetail, o
         </button>
 
         <button className="action-pill-btn" onClick={handleExplain} title="Explain why this post was recommended">
-          <Shield size={14} />
+          <Sparkles size={14} />
           <span>Why?</span>
         </button>
       </div>

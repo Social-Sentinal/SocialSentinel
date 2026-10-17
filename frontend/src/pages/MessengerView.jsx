@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import MediaImage from '../components/MediaImage';
-import { Heart, MessageCircle, Share2, Sparkles, X, Send, Compass, Search, Users, Brain, Shield, BarChart3, TrendingUp } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 
 export function MessengerView({ user, sharePost, onClearShare }) {
   const [conversations, setConversations] = useState([]);
@@ -167,7 +167,7 @@ export function MessengerView({ user, sharePost, onClearShare }) {
               <MediaImage src={otherMember?.avatar_url} fallbackText={otherMember?.display_name || 'U'} isAvatar style={{ width: 34, height: 34, borderRadius: '50%' }} />
               <div>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{otherMember?.display_name || 'Direct Chat'}</div>
-                <div style={{ fontSize: 11, color: 'var(--accent-emerald)' }}>● Active on SocialSentinel</div>
+                <div style={{ fontSize: 11, color: 'var(--status-positive)' }}>● Active on SocialSentinel</div>
               </div>
             </div>
 

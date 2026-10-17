@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import MediaImage from '../components/MediaImage';
-import { Heart, MessageCircle, Share2, Sparkles, X, Send, Compass, Search, Users, Brain, Shield, BarChart3, TrendingUp } from 'lucide-react';
+import { Brain, Sparkles } from 'lucide-react';
 
 export function AIStudioPage({ user }) {
   const [text, setText] = useState('Sub-15ms local inference is a huge milestone for user privacy and resilient architecture.');
@@ -54,22 +54,23 @@ export function AIStudioPage({ user }) {
   return (
     <div className="fullwidth-page">
       <div className="sentinel-card">
-        <h2 className="card-heading"><Brain size={22} color="var(--primary)" /> SocialSentinel AI Studio</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-          Real-time Scikit-Learn TF-IDF classification and grounded conversational intelligence.
+        <h2 className="card-heading"><Brain size={22} color="var(--primary)" /> AI Tone & Sentiment Studio</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+          Live sentiment analysis and intelligent assistants.
         </p>
       </div>
 
       <div className="ai-columns-grid">
         <div className="sentinel-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <h3 className="card-heading"><Sparkles size={16} color="var(--accent-cyan)" /> NLP Sentiment Analyzer</h3>
+          <h3 className="card-heading"><Sparkles size={16} color="var(--primary)" /> Tone & Emotion Analyzer</h3>
           <textarea
-            style={{ width: '100%', minHeight: 100, padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
+            style={{ width: '100%', minHeight: 100, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
             value={text}
             onChange={e => setText(e.target.value)}
+            placeholder="Type any sentence or insight to analyze its tone..."
           />
           <button className="btn-primary" onClick={runNlp} disabled={analyzing} style={{ alignSelf: 'flex-start' }}>
-            {analyzing ? 'Analyzing…' : 'Run Scikit-Learn Prediction'}
+            {analyzing ? 'Analyzing…' : 'Analyze Tone'}
           </button>
 
           {sentiment && (
@@ -87,18 +88,18 @@ export function AIStudioPage({ user }) {
                   <span>Neutral: {Math.round((sentiment.probabilities?.neutral || 0) * 100)}%</span>
                   <span>Negative: {Math.round((sentiment.probabilities?.negative || 0) * 100)}%</span>
                 </div>
-                <div style={{ display: 'flex', height: 10, borderRadius: 99, overflow: 'hidden', background: 'var(--bg-elevated)', marginTop: 6 }}>
-                  <div style={{ width: `${(sentiment.probabilities?.positive || 0) * 100}%`, background: '#059669' }} />
-                  <div style={{ width: `${(sentiment.probabilities?.neutral || 0) * 100}%`, background: '#64748b' }} />
-                  <div style={{ width: `${(sentiment.probabilities?.negative || 0) * 100}%`, background: '#ef4444' }} />
+                <div style={{ display: 'flex', height: 8, borderRadius: 99, overflow: 'hidden', background: 'var(--bg-elevated)', marginTop: 6 }}>
+                  <div style={{ width: `${(sentiment.probabilities?.positive || 0) * 100}%`, background: 'var(--status-positive)' }} />
+                  <div style={{ width: `${(sentiment.probabilities?.neutral || 0) * 100}%`, background: 'var(--status-neutral)' }} />
+                  <div style={{ width: `${(sentiment.probabilities?.negative || 0) * 100}%`, background: 'var(--status-negative)' }} />
                 </div>
               </div>
 
               {emotion && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontWeight: 700 }}>Emotion:</span>
-                  <span style={{ color: 'var(--accent-purple)', fontWeight: 700 }}>
-                    🌿 {emotion.emotion.toUpperCase()} ({Math.round(emotion.confidence * 100)}%)
+                  <span style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                    ✨ {emotion.emotion.toUpperCase()} ({Math.round(emotion.confidence * 100)}%)
                   </span>
                 </div>
               )}
@@ -108,9 +109,9 @@ export function AIStudioPage({ user }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="sentinel-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <h3 className="card-heading"><Shield size={16} color="var(--primary)" /> Grounded AI Copilot</h3>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              Ask questions about recommendations, topic affinity trends, or platform mechanics.
+            <h3 className="card-heading"><Sparkles size={16} color="var(--primary)" /> Intelligent Copilot</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              Ask questions about feed topics, network trends, or community discussions.
             </p>
 
             <textarea

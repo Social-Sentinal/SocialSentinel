@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import MediaImage from '../components/MediaImage';
-import { Heart, MessageCircle, Share2, Sparkles, X, Send, Compass, Search, Users, Brain, Shield, BarChart3, TrendingUp } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export function AuthView({ onLogin }) {
   const [mode, setMode] = useState('login');
@@ -39,24 +39,22 @@ export function AuthView({ onLogin }) {
   return (
     <div className="auth-stage">
       <div className="auth-panel-card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
-          <div className="brand-shield-icon">
-            <Shield size={22} />
-          </div>
-          <div className="brand-name" style={{ fontSize: 24 }}>SocialSentinel</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+          <img src="/logo.png" alt="SocialSentinel Logo" className="brand-logo-img" style={{ width: 46, height: 46 }} />
+          <div className="brand-name" style={{ fontSize: 26 }}>SocialSentinel</div>
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 20 }}>
-            {mode === 'login' ? 'Welcome Back' : 'Join SocialSentinel'}
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700 }}>
+            {mode === 'login' ? 'Welcome Back' : 'Create an Account'}
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4 }}>
-            AI-driven social network with hybrid recommendations and sentiment awareness.
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
+            Connect, discover, and share across intelligent topic communities.
           </p>
         </div>
 
         {error && (
-          <div style={{ color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)', padding: 8, borderRadius: 6, fontSize: 13, fontWeight: 600 }}>
+          <div style={{ color: 'var(--status-negative)', background: 'var(--status-negative-bg)', border: '1px solid var(--status-negative-border)', padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
             {error}
           </div>
         )}
@@ -68,7 +66,7 @@ export function AuthView({ onLogin }) {
               placeholder="Username"
               value={form.username}
               onChange={e => setForm({ ...form, username: e.target.value })}
-              style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
+              style={{ padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
             />
           )}
 
@@ -77,7 +75,7 @@ export function AuthView({ onLogin }) {
             placeholder={mode === 'login' ? 'Email or Username' : 'Email Address'}
             value={form.email}
             onChange={e => setForm({ ...form, email: e.target.value })}
-            style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
+            style={{ padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
           />
 
           {mode === 'register' && (
@@ -85,7 +83,7 @@ export function AuthView({ onLogin }) {
               placeholder="Display Name"
               value={form.display_name}
               onChange={e => setForm({ ...form, display_name: e.target.value })}
-              style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
+              style={{ padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
             />
           )}
 
@@ -95,11 +93,11 @@ export function AuthView({ onLogin }) {
             placeholder="Password"
             value={form.password}
             onChange={e => setForm({ ...form, password: e.target.value })}
-            style={{ padding: 10, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
+            style={{ padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
           />
 
-          <button className="btn-primary" style={{ justifyContent: 'center', padding: 12, marginTop: 4 }} disabled={loading}>
-            {loading ? 'Authenticating…' : mode === 'login' ? 'Log In' : 'Create Account'}
+          <button className="btn-primary" style={{ justifyContent: 'center', padding: 12, marginTop: 4, width: '100%' }} disabled={loading}>
+            {loading ? 'Authenticating…' : mode === 'login' ? 'Sign In' : 'Sign Up'}
           </button>
         </form>
 
@@ -111,19 +109,18 @@ export function AuthView({ onLogin }) {
             }}
             style={{ color: 'var(--primary)', fontWeight: 600, fontSize: 13 }}
           >
-            {mode === 'login' ? 'Need an account? Register' : 'Already have an account? Log in'}
+            {mode === 'login' ? "Don't have an account? Register" : 'Already have an account? Sign in'}
           </button>
         </div>
 
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Quick Assessment & Interview Review</span>
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button
             onClick={handleDemo}
             className="btn-secondary"
-            style={{ justifyContent: 'center', padding: 10, fontWeight: 700 }}
+            style={{ justifyContent: 'center', padding: 11, fontWeight: 700, width: '100%', borderColor: 'var(--border)' }}
             disabled={loading}
           >
-            🚀 Try Demo Account (Sentinel Explorer)
+            <Sparkles size={16} color="var(--primary)" /> Try Demo Account (Sentinel Explorer)
           </button>
         </div>
       </div>

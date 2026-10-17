@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import MediaImage from './MediaImage';
-import { Heart, MessageCircle, Share2, Sparkles, X, Send, Compass, Search, Users, Brain, Shield, BarChart3, TrendingUp } from 'lucide-react';
+import { Sliders, Users, Flame } from 'lucide-react';
 
 export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
   const [explorationRate, setExplorationRate] = useState(20);
@@ -32,17 +32,17 @@ export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
   return (
     <aside className="side-column">
       {/* Exploration Slider Widget */}
-      <div className="sentinel-card" style={{ background: 'linear-gradient(135deg, var(--primary-light), rgba(14, 165, 233, 0.08))', borderColor: 'rgba(99, 102, 241, 0.25)' }}>
+      <div className="sentinel-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <span style={{ fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-primary)' }}>
             <Sliders size={14} color="var(--primary)" /> Discovery Steerer
           </span>
-          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'var(--primary)', color: 'white' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'var(--primary-gradient)', color: 'white' }}>
             {explorationRate}%
           </span>
         </div>
-        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10, lineHeight: 1.4 }}>
-          Adjusts serendipity to explore topics beyond your direct interaction history.
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.4 }}>
+          Fine-tune topic diversity & serendipity.
         </p>
         <input
           type="range"
@@ -57,7 +57,7 @@ export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
       {/* Suggested Communities */}
       <div className="sentinel-card">
         <div className="card-heading">
-          <Users size={16} color="var(--accent-purple)" />
+          <Users size={16} color="var(--primary)" />
           <span>Recommended Communities</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -72,7 +72,7 @@ export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
               </div>
               <button
                 className={c.is_member ? 'btn-secondary' : 'btn-primary'}
-                style={{ padding: '3px 9px', fontSize: 11 }}
+                style={{ padding: '4px 12px', fontSize: 11 }}
                 onClick={() => handleJoin(c.id)}
               >
                 {c.is_member ? 'Joined' : 'Join'}
@@ -85,8 +85,8 @@ export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
       {/* Trending Topics */}
       <div className="sentinel-card">
         <div className="card-heading">
-          <Flame size={16} color="var(--accent-pink)" />
-          <span>Trending on SocialSentinel</span>
+          <Flame size={16} color="var(--primary)" />
+          <span>Trending Topics</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[

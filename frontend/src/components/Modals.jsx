@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { TOPICS } from '../constants';
 import MediaImage from './MediaImage';
-import { Heart, MessageCircle, Share2, Sparkles, X, Send, Compass, Search, Users, Brain, Shield, BarChart3, TrendingUp } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export function CreatePostModal({ user, onClose, onCreated }) {
   const [caption, setCaption] = useState('');

@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import MediaImage from '../components/MediaImage';
-import { Heart, MessageCircle, Share2, Sparkles, X, Send, Compass, Search, Users, Brain, Shield, BarChart3, TrendingUp } from 'lucide-react';
-
 import { PostCardItem } from '../components/PostCardItem';
 export function ProfileStream({ user, setUser, onOpenShare, onOpenDetail, onExplain }) {
   const [posts, setPosts] = useState([]);
@@ -38,7 +36,7 @@ export function ProfileStream({ user, setUser, onOpenShare, onOpenDetail, onExpl
   return (
     <>
       <div className="sentinel-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ height: 160, background: 'linear-gradient(135deg, var(--primary), var(--accent-emerald))', position: 'relative' }}>
+        <div style={{ height: 160, background: 'var(--primary-gradient)', position: 'relative' }}>
         </div>
         <div style={{ padding: '0 24px 24px 24px', position: 'relative', marginTop: -40 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
@@ -46,7 +44,7 @@ export function ProfileStream({ user, setUser, onOpenShare, onOpenDetail, onExpl
               src={user.avatar_url}
               fallbackText={user.display_name}
               isAvatar
-              style={{ width: 100, height: 100, borderRadius: '50%', border: '4px solid var(--surface)', background: 'var(--surface)' }}
+              style={{ width: 100, height: 100, borderRadius: '50%', border: '4px solid var(--bg-card)', background: 'var(--bg-card)' }}
             />
             <button className="btn-secondary" onClick={() => setEditing(!editing)}>
               {editing ? 'Cancel' : 'Edit Profile'}

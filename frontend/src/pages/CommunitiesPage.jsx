@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import MediaImage from '../components/MediaImage';
 import { PostCardItem } from '../components/PostCardItem';
-import { Heart, MessageCircle, Share2, Sparkles, X, Send, Compass, Search, Users, Brain, Shield, BarChart3, TrendingUp } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 export function CommunitiesPage({ user, onOpenShare, onOpenDetail, onExplain }) {
   const [communities, setCommunities] = useState([]);
@@ -81,9 +81,9 @@ export function CommunitiesPage({ user, onOpenShare, onOpenDetail, onExplain }) 
   return (
     <div className="fullwidth-page">
       <div className="sentinel-card">
-        <h2 className="card-heading"><Users size={22} color="var(--primary)" /> SocialSentinel Communities</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-          Join focused clusters of creators and researchers exploring specialized domains of technology and digital wellbeing.
+        <h2 className="card-heading"><Users size={22} color="var(--primary)" /> Topic Communities</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+          Explore and connect in dedicated topic communities.
         </p>
       </div>
 

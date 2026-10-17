@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import MediaImage from '../components/MediaImage';
-import { Heart, MessageCircle, Share2, Sparkles, X, Send, Compass, Search, Users, Brain, Shield, BarChart3, TrendingUp } from 'lucide-react';
+import { Compass, Search, Sparkles } from 'lucide-react';
 
 import { PostCardItem } from '../components/PostCardItem';
 export function ExploreStream({ user, onOpenShare, onOpenDetail, onExplain }) {
@@ -49,14 +49,14 @@ export function ExploreStream({ user, onOpenShare, onOpenDetail, onExplain }) {
   return (
     <>
       <div className="sentinel-card">
-        <h2 className="card-heading"><Compass size={20} color="var(--primary)" /> SocialSentinel Explorer</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 12 }}>
-          Find technical insights, research updates, security advisories, and creators across the network.
+        <h2 className="card-heading"><Compass size={20} color="var(--primary)" /> Explore & Discover</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 12 }}>
+          Search discussions, filter by sentiment tone, and discover trending topics.
         </p>
         
         <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-          <button className={`btn-${mode === 'recommend' ? 'primary' : 'secondary'}`} onClick={() => doSearch(query, topic, sentiment, author, 'recommend')}>Smart Feed</button>
-          <button className={`btn-${mode === 'serendipity' ? 'primary' : 'secondary'}`} onClick={() => doSearch(query, topic, sentiment, author, 'serendipity')}>Surprise Me</button>
+          <button className={`btn-${mode === 'recommend' ? 'primary' : 'secondary'}`} onClick={() => doSearch(query, topic, sentiment, author, 'recommend')}>Feed Recommendations</button>
+          <button className={`btn-${mode === 'serendipity' ? 'primary' : 'secondary'}`} onClick={() => doSearch(query, topic, sentiment, author, 'serendipity')}>Serendipity</button>
           <button className={`btn-${mode === 'search' ? 'primary' : 'secondary'}`} onClick={() => doSearch(query, topic, sentiment, author, 'search')}>Search & Filter</button>
         </div>
 

@@ -8,20 +8,12 @@ import {
   BarChart3,
   User,
   Plus,
-  Heart,
-  Bookmark,
-  Share2,
-  Send,
   LogOut,
   Search,
   Sun,
   Moon,
-  Shield,
   Sparkles,
-  X,
-  Flame,
-  Sliders,
-  Check
+  X
 } from 'lucide-react';
 import { api } from './services/api';
 import MediaImage from './components/MediaImage';
@@ -102,12 +94,10 @@ export default function App() {
       {/* Left Sidebar Rail */}
       <aside className="app-sidebar">
         <div className="brand-section" onClick={() => setActiveTab('feed')}>
-          <div className="brand-shield-icon">
-            <Shield size={22} />
-          </div>
+          <img src="/logo.png" alt="SocialSentinel Logo" className="brand-logo-img" />
           <div className="brand-text-block">
             <div className="brand-name">SocialSentinel</div>
-            <span className="brand-sub">AI Social Network</span>
+            <span className="brand-sub">Social Network</span>
           </div>
         </div>
 
@@ -125,7 +115,7 @@ export default function App() {
               <Icon size={18} />
               <span>{label}</span>
               {id === 'messages' && unreadCount > 0 && (
-                <span style={{ marginLeft: 'auto', background: 'var(--accent-pink)', color: 'white', padding: '2px 7px', borderRadius: 99, fontSize: 11, fontWeight: 700 }}>
+                <span style={{ marginLeft: 'auto', background: 'var(--primary)', color: 'white', padding: '2px 7px', borderRadius: 99, fontSize: 11, fontWeight: 700 }}>
                   {unreadCount}
                 </span>
               )}
@@ -168,8 +158,11 @@ export default function App() {
       {/* Main Viewport */}
       <div className="app-viewport">
         <header className="viewport-header">
-          <div className="header-title-text">
-            {NAV_TABS.find(t => t.id === activeTab)?.label || 'SocialSentinel'}
+          <div className="header-left-group">
+            <img src="/logo.png" alt="Logo" className="brand-logo-img mobile-header-brand" onClick={() => setActiveTab('feed')} style={{ cursor: 'pointer' }} />
+            <div className="header-title-text">
+              {NAV_TABS.find(t => t.id === activeTab)?.label || 'SocialSentinel'}
+            </div>
           </div>
 
           <div className="header-search-container">
@@ -319,18 +312,18 @@ export default function App() {
           <div className="modal-content-box" onClick={e => e.stopPropagation()}>
             <div className="modal-header-bar">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 16 }}>
-                <Shield size={18} color="var(--primary)" /> Why Was This Recommended?
+                <Sparkles size={18} color="var(--primary)" /> Why Was This Recommended?
               </div>
               <button onClick={() => setExplainModalData(null)} style={{ color: 'var(--text-muted)' }}>
                 <X size={18} />
               </button>
             </div>
             <div className="modal-body-content">
-              <div style={{ background: 'var(--bg-elevated)', padding: 16, borderRadius: 'var(--radius-md)', fontSize: 14, lineHeight: 1.6 }}>
+              <div style={{ background: 'var(--bg-elevated)', padding: 16, borderRadius: 'var(--radius-md)', fontSize: 14, lineHeight: 1.6, border: '1px solid var(--border)' }}>
                 {explainModalData.response}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                Signals: Engine verified TF-IDF vector alignment, collaborative weights, and your active topic preferences.
+                Personalized based on topics and creators you follow.
               </div>
               <button className="btn-primary" style={{ alignSelf: 'flex-end' }} onClick={() => setExplainModalData(null)}>
                 Understood

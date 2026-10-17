@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import MediaImage from '../components/MediaImage';
-import { Heart, MessageCircle, Share2, Sparkles, X, Send, Compass, Search, Users, Brain, Shield, BarChart3, TrendingUp } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 
 export function AnalyticsPage({ user }) {
   const [data, setData] = useState(null);
@@ -16,9 +16,9 @@ export function AnalyticsPage({ user }) {
   return (
     <div className="fullwidth-page">
       <div className="sentinel-card">
-        <h2 className="card-heading"><BarChart3 size={22} color="var(--primary)" /> Engagement & Telemetry</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-          Live metrics from your likes, views, saves, follows, and topic engagements on SocialSentinel.
+        <h2 className="card-heading"><BarChart3 size={22} color="var(--primary)" /> Engagement Insights</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+          Live metrics from your interactions, topics, and community activities.
         </p>
       </div>
 
@@ -37,7 +37,7 @@ export function AnalyticsPage({ user }) {
       </div>
 
       <div className="sentinel-card">
-        <h3 className="card-heading">Topic Engagement Signals</h3>
+        <h3 className="card-heading">Topic Activity</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
           {Object.entries(topics).map(([topic, count]) => (
             <div key={topic}>
@@ -46,7 +46,7 @@ export function AnalyticsPage({ user }) {
                 <span style={{ color: 'var(--text-muted)' }}>{count} signals</span>
               </div>
               <div style={{ height: 8, borderRadius: 4, background: 'var(--bg-elevated)', overflow: 'hidden' }}>
-                <div style={{ width: `${Math.round((count / maxVal) * 100)}%`, height: '100%', background: 'var(--primary)', borderRadius: 4 }} />
+                <div style={{ width: `${Math.round((count / maxVal) * 100)}%`, height: '100%', background: 'var(--primary-gradient)', borderRadius: 4 }} />
               </div>
             </div>
           ))}
