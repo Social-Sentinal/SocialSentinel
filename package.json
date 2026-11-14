@@ -8,8 +8,11 @@
     "dev": "npm --prefix frontend run dev",
     "dev:backend": "python run.py",
     "dev:frontend": "npm --prefix frontend run dev",
-    "build:frontend": "npm --prefix frontend run build",
-    "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "build:frontend": "cd frontend && npm run build",
+    "build": "cd frontend && npm install && npm run build",
     "test": "pytest"
+  },
+  "devDependencies": {
+    "next": "^14.2.0"
   }
 }

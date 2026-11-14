@@ -142,7 +142,7 @@ src/
 │
 ├── components/                      # Reusable UI Component Library
 │   ├── ui/                          # Atoms: buttons, inputs, dialogs, dropdowns, toasts
-│   ├── layout/                      # LeftSidebar, RightSidebarRail, MobileNav, Header
+│   ├── layout/                      # Navbar, FeedContainer, MobileNav, Modals
 │   ├── posts/                       # PostCard, PostComposer, PostDetail, SentimentBadge
 │   └── chat/                        # ConversationList, ChatWindow, MessageBubble
 │

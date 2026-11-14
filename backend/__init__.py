@@ -52,8 +52,8 @@ def seed_database():
     # 1. Model versions
     if ModelVersion.query.count() == 0:
         for name, ver, alg in [
-            ("sentiment", "v2", "RandomForest + TF-IDF with Lexicon Nuance"),
-            ("emotion", "v2", "Heuristic Emotion Pattern Engine"),
+            ("sentiment", "v3", "Sentinel Lexicon & Nuance Engine"),
+            ("emotion", "v3", "Heuristic Emotion Pattern Engine"),
             ("ranker", "v4", "SocialSentinel Hybrid Recommendation + Diversity Engine")
         ]:
             db.session.add(ModelVersion(name=name, version=ver, algorithm=alg, status="active"))

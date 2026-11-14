@@ -62,6 +62,8 @@ export default function MediaImage({
       alt={alt}
       style={style}
       className={className}
+      referrerPolicy="no-referrer"
+      crossOrigin="anonymous"
       onError={() => setError(true)}
       onClick={onClick}
       title={title}

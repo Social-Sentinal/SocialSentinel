@@ -1,11 +1,13 @@
 import os
 import re
+from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, decode_token
 from backend.extensions import db, limiter
 from backend.models import *
-from backend.services.recommendation_service import recommend, get_serendipity_feed
-from backend.services.sentiment_service import predict_sentiment, emotion_detection
+from backend.services.recommendation_service import recommend, get_serendipity_feed, explain_recommendation
+from backend.services.sentiment_service import predict_sentiment, emotion_detection, record_comment_sentiment_and_update_profile
+from backend.services.embedding_service import get_or_create_post_embedding
 from backend.services.ai_service import generate_ai_response
 
 api_bp = Blueprint("api_v1", __name__, url_prefix="/api/v1")
@@ -32,7 +34,7 @@ def auth_error(msg="Authentication required"):
 
 @api_bp.get("/health")
 def api_health():
-    return {"status": "ok", "service": "SocialSentinel", "version": "4.2.0"}
+    return {"status": "ok", "service": "SocialSentinel", "version": "5.0.0"}
 
 @api_bp.post("/auth/register")
 @limiter.limit("10 per minute")
@@ -42,157 +44,209 @@ def register():
     username = str(d.get("username", "")).strip().lower()
     password = str(d.get("password", ""))
     display = str(d.get("display_name") or username).strip()
-    
+
     if not re.fullmatch(r"[a-z0-9_]{3,40}", username):
         return {"message": "Username must be 3-40 chars: letters, numbers, underscore"}, 400
     if "@" not in email or len(email) > 255:
         return {"message": "Valid email required"}, 400
     if len(password) < 6:
         return {"message": "Password must be at least 6 characters"}, 400
-    if User.query.filter((User.email == email) | (User.username == username)).first():
-        return {"message": "Email or username already exists"}, 409
+    if User.query.filter_by(username=username).first():
+        return {"message": "Username already taken"}, 409
+    if User.query.filter_by(email=email).first():
+        return {"message": "Email already registered"}, 409
 
-    u = User(username=username, email=email, display_name=display)
-    u.set_password(password)
-    db.session.add(u)
+    user = User(username=username, email=email, display_name=display or username)
+    user.set_password(password)
+    db.session.add(user)
     db.session.flush()
-    db.session.add(UserPreference(user_id=u.id))
+
+    db.session.add(UserPreference(user_id=user.id))
     db.session.commit()
+
+    sub = str(user.id)
     return {
-        "user": u.to_dict(True),
-        "access_token": create_access_token(identity=str(u.id)),
-        "refresh_token": create_refresh_token(identity=str(u.id))
+        "access_token": create_access_token(identity=sub),
+        "refresh_token": create_refresh_token(identity=sub),
+        "user": user.to_dict(private=True)
     }, 201
 
 @api_bp.post("/auth/login")
 @limiter.limit("20 per minute")
 def login():
     d = request.get_json(silent=True) or {}
-    ident = str(d.get("email") or d.get("username") or "").strip().lower()
-    u = User.query.filter((User.email == ident) | (User.username == ident)).first()
-    if not u or not u.check_password(str(d.get("password", ""))):
-        return {"message": "Invalid credentials"}, 401
+    ident = str(d.get("identifier") or d.get("username") or d.get("email") or "").strip().lower()
+    password = str(d.get("password", ""))
+
+    user = User.query.filter(db.or_(User.username == ident, User.email == ident)).first()
+    if not user or not user.check_password(password):
+        return {"message": "Invalid username or password"}, 401
+
+    sub = str(user.id)
     return {
-        "user": u.to_dict(True),
-        "access_token": create_access_token(identity=str(u.id)),
-        "refresh_token": create_refresh_token(identity=str(u.id))
+        "access_token": create_access_token(identity=sub),
+        "refresh_token": create_refresh_token(identity=sub),
+        "user": user.to_dict(private=True)
     }
 
 @api_bp.post("/auth/demo")
 def demo_login():
-    u = User.query.filter_by(username="demo").first()
-    if not u:
-        u = User.query.first()
-    if not u:
-        return {"message": "No demo user initialized yet"}, 404
+    demo = User.query.filter_by(username="demo").first()
+    if not demo:
+        demo = User(username="demo", email="demo@socialsentinel.io", display_name="Sentinel Explorer")
+        demo.set_password("Demo1234!")
+        db.session.add(demo)
+        db.session.flush()
+        db.session.add(UserPreference(user_id=demo.id))
+        db.session.commit()
+
+    sub = str(demo.id)
     return {
-        "user": u.to_dict(True),
-        "access_token": create_access_token(identity=str(u.id)),
-        "refresh_token": create_refresh_token(identity=str(u.id))
+        "access_token": create_access_token(identity=sub),
+        "refresh_token": create_refresh_token(identity=sub),
+        "user": demo.to_dict(private=True)
     }
 
 @api_bp.post("/auth/refresh")
 @jwt_required(refresh=True)
-def refresh():
-    return {"access_token": create_access_token(identity=str(get_jwt_identity()))}
+def refresh_token():
+    sub = get_jwt_identity()
+    return {"access_token": create_access_token(identity=sub)}
 
 @api_bp.get("/users/me")
 @jwt_required()
 def me():
-    u = me_user()
-    if not u:
-        return auth_error()
-    return {"user": u.to_dict(True), "preferences": (u.preferences or UserPreference(user_id=u.id)).to_dict()}
+    return {"user": me_user().to_dict(private=True)}
 
 @api_bp.put("/users/me")
 @jwt_required()
 def update_me():
     u = me_user()
-    if not u:
-        return auth_error()
     d = request.get_json(silent=True) or {}
-    for k in ("display_name", "bio", "avatar_url"):
-        if k in d:
-            setattr(u, k, str(d[k])[:1000])
-    if "username" in d:
-        v = str(d["username"]).lower().strip()
-        if not re.fullmatch(r"[a-z0-9_]{3,40}", v):
-            return {"message": "Invalid username format"}, 400
-        if User.query.filter(User.username == v, User.id != u.id).first():
-            return {"message": "Username already taken"}, 409
-        u.username = v
+    if "display_name" in d:
+        u.display_name = str(d["display_name"]).strip()[:120]
+    if "bio" in d:
+        u.bio = str(d["bio"]).strip()[:1000]
+    if "avatar_url" in d:
+        u.avatar_url = str(d["avatar_url"]).strip()[:1000]
+    if "is_private" in d:
+        u.is_private = bool(d["is_private"])
     db.session.commit()
-    return {"user": u.to_dict(True)}
+    return {"user": u.to_dict(private=True)}
+
+@api_bp.get("/users/<username>")
+def get_user_profile(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    viewer = optional_user_id()
+    data = user.to_dict(private=(viewer == user.id))
+    data["is_following"] = bool(viewer and Follow.query.filter_by(follower_id=viewer, following_id=user.id).first())
+    return {"user": data}
 
 @api_bp.put("/users/preferences")
 @jwt_required()
-def prefs():
+def update_prefs():
     u = me_user()
-    if not u:
-        return auth_error()
-    p = u.preferences or UserPreference(user_id=u.id)
+    p = u.preferences
+    if not p:
+        p = UserPreference(user_id=u.id)
+        db.session.add(p)
     d = request.get_json(silent=True) or {}
     if "preferred_topics" in d:
-        p.preferred_topics = ",".join(map(str, d["preferred_topics"]))[:1000]
-    if "theme" in d and d["theme"] in ("system", "light", "dark"):
-        p.theme = d["theme"]
+        if isinstance(d["preferred_topics"], list):
+            p.preferred_topics = ",".join(d["preferred_topics"])
+        else:
+            p.preferred_topics = str(d["preferred_topics"])
     if "exploration_rate" in d:
-        p.exploration_rate = max(0.0, min(1.0, float(d["exploration_rate"])))
-    db.session.add(p)
+        p.exploration_rate = max(0.05, min(0.80, float(d["exploration_rate"])))
+    if "theme" in d:
+        p.theme = str(d["theme"])
+    if "auto_moderate" in d:
+        p.auto_moderate = bool(d["auto_moderate"])
     db.session.commit()
     return {"preferences": p.to_dict()}
 
-@api_bp.get("/users/<username>")
-def public_profile(username):
-    u = User.query.filter_by(username=username.lower()).first_or_404()
-    return {"user": u.to_dict()}
+@api_bp.get("/users/topic-preferences")
+@jwt_required()
+def get_user_topic_preferences():
+    u = me_user()
+    rows = UserTopicPreference.query.filter_by(user_id=u.id).order_by(UserTopicPreference.interaction_count.desc()).all()
+    return {"data": [r.to_dict() for r in rows]}
+
+@api_bp.post("/users/topic-preferences/reset")
+@jwt_required()
+def reset_user_topic_preferences():
+    u = me_user()
+    UserTopicPreference.query.filter_by(user_id=u.id).delete()
+    db.session.commit()
+    return {"status": "ok", "message": "Topic sentiment preferences reset to baseline"}
 
 @api_bp.post("/users/<int:user_id>/follow")
 @jwt_required()
-def follow(user_id):
+def toggle_follow(user_id):
     u = me_user()
-    target = User.query.get_or_404(user_id)
-    if u.id == target.id:
+    if u.id == user_id:
         return {"message": "Cannot follow yourself"}, 400
+    target = User.query.get_or_404(user_id)
     f = Follow.query.filter_by(follower_id=u.id, following_id=target.id).first()
     if f:
         db.session.delete(f)
-        action = "unfollow"
+        following = False
     else:
         db.session.add(Follow(follower_id=u.id, following_id=target.id))
         db.session.add(Notification(user_id=target.id, actor_id=u.id, type="follow"))
-        action = "follow"
+        db.session.add(Interaction(user_id=u.id, post_id=1, event_type="follow"))
+        following = True
     db.session.commit()
-    return {"action": action, "following": action == "follow"}
+    return {"following": following, "followers_count": Follow.query.filter_by(following_id=target.id).count()}
 
+@api_bp.post("/users/<int:user_id>/block")
+@jwt_required()
+def toggle_block(user_id):
+    u = me_user()
+    if u.id == user_id:
+        return {"message": "Cannot block yourself"}, 400
+    target = User.query.get_or_404(user_id)
+    b = Block.query.filter_by(blocker_id=u.id, blocked_id=target.id).first()
+    if b:
+        db.session.delete(b)
+        blocked = False
+    else:
+        db.session.add(Block(blocker_id=u.id, blocked_id=target.id))
+        # Unfollow each other upon block
+        Follow.query.filter(
+            db.or_(
+                db.and_(Follow.follower_id == u.id, Follow.following_id == target.id),
+                db.and_(Follow.follower_id == target.id, Follow.following_id == u.id)
+            )
+        ).delete()
+        blocked = True
+    db.session.commit()
+    return {"blocked": blocked}
+
+# Posts & Feed
 @api_bp.get("/posts")
-def posts():
+def list_posts():
     viewer = optional_user_id()
     page, limit = page_args()
-    q = (request.args.get("q") or "").strip()
-    topic = request.args.get("topic")
-    sentiment = request.args.get("sentiment")
-    author = request.args.get("author")
-    
+    q = request.args.get("q", "").strip()
+    topic = request.args.get("topic", "").strip()
+    sentiment_filter = request.args.get("sentiment", "").strip()
+    author_name = request.args.get("author", "").strip()
+
     query = Post.query
+    if author_name:
+        author = User.query.filter_by(username=author_name).first()
+        if author:
+            query = query.filter_by(author_id=author.id)
+    if topic and topic != "All":
+        query = query.filter_by(topic_category=topic)
+    if sentiment_filter and sentiment_filter != "All":
+        query = query.filter_by(sentiment=sentiment_filter)
     if q:
         query = query.filter(db.or_(Post.caption.ilike(f"%{q}%"), Post.hashtags.ilike(f"%{q}%")))
-    if topic and topic.lower() != "all":
-        query = query.filter_by(topic_category=topic)
-    if sentiment and sentiment.lower() != "all":
-        query = query.filter_by(sentiment=sentiment)
-    if author:
-        query = query.join(User).filter(User.username == author)
-        
-    query = query.order_by(Post.created_at.desc())
-    total = query.count()
-    rows = query.offset((page - 1) * limit).limit(limit).all()
-    return {
-        "data": [p.to_dict(viewer) for p in rows],
-        "page": page,
-        "limit": limit,
-        "total": total
-    }
+
+    rows = query.order_by(Post.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+    return {"data": [p.to_dict(viewer) for p in rows], "page": page}
 
 @api_bp.post("/posts")
 @jwt_required()
@@ -202,14 +256,20 @@ def create_post():
     text = str(d.get("caption", "")).strip()
     if not text or len(text) > 5000:
         return {"message": "Caption must be 1-5000 characters"}, 400
-        
+
+    topic = str(d.get("topic", "AI & Tech"))[:80]
+    hashtags = str(d.get("hashtags", ""))[:1000]
+
     p = Post(
         author_id=u.id,
         caption=text,
-        hashtags=str(d.get("hashtags", ""))[:1000],
-        media_url=d.get("media_url"),
-        topic_category=str(d.get("topic", "Astrophysics & Cosmos"))[:80]
+        hashtags=hashtags,
+        media_url=d.get("media_url", ""),
+        video_url=d.get("video_url", ""),
+        media_type=d.get("media_type", "video" if d.get("video_url") else ("image" if d.get("media_url") else "text")),
+        topic_category=topic
     )
+
     try:
         s = predict_sentiment(text, u.id)
         e = emotion_detection(text)
@@ -219,38 +279,53 @@ def create_post():
         p.emotion_confidence = e["confidence"]
     except Exception:
         pass
-        
+
     db.session.add(p)
+    db.session.flush()
+
+    # Pre-generate & cache embedding vector
+    get_or_create_post_embedding(p)
+
+    # Process hashtags
+    tags = re.findall(r"#([a-zA-Z0-9_]+)", f"{text} {hashtags}")
+    for tag_name in set(tags):
+        tag_obj = Hashtag.query.filter_by(tag=tag_name.lower()).first()
+        if not tag_obj:
+            tag_obj = Hashtag(tag=tag_name.lower(), post_count=1)
+            db.session.add(tag_obj)
+            db.session.flush()
+        else:
+            tag_obj.post_count += 1
+        db.session.add(PostHashtag(post_id=p.id, hashtag_id=tag_obj.id))
+
     db.session.commit()
     return {"post": p.to_dict(u.id)}, 201
 
-@api_bp.put("/posts/<int:post_id>")
-@jwt_required()
-def edit_post(post_id):
+@api_bp.get("/posts/<int:post_id>")
+def get_post(post_id):
     p = Post.query.get_or_404(post_id)
-    u = me_user()
-    if p.author_id != u.id:
-        return auth_error("Not allowed")
-    d = request.get_json(silent=True) or {}
-    p.caption = str(d.get("caption", p.caption)).strip()
-    p.hashtags = str(d.get("hashtags", p.hashtags))[:1000]
-    db.session.commit()
-    return {"post": p.to_dict(u.id)}
+    viewer = optional_user_id()
+    # Log view interaction
+    if viewer:
+        db.session.add(Interaction(user_id=viewer, post_id=p.id, event_type="view"))
+        p.view_count = (p.view_count or 0) + 1
+        db.session.commit()
+    return {"post": p.to_dict(viewer)}
 
 @api_bp.delete("/posts/<int:post_id>")
 @jwt_required()
 def delete_post(post_id):
     p = Post.query.get_or_404(post_id)
     u = me_user()
-    if p.author_id != u.id:
-        return auth_error("Not allowed")
+    if p.author_id != u.id and not u.is_admin:
+        return auth_error("Not authorized")
     db.session.delete(p)
     db.session.commit()
     return {"deleted": True}
 
 @api_bp.post("/posts/<int:post_id>/<action>")
 @jwt_required()
-def interaction(post_id, action):
+def post_action(post_id, action):
     u = me_user()
     p = Post.query.get_or_404(post_id)
     if action == "like":
@@ -264,7 +339,7 @@ def interaction(post_id, action):
                 db.session.add(Notification(user_id=p.author_id, actor_id=u.id, type="like", post_id=p.id))
             db.session.add(Interaction(user_id=u.id, post_id=p.id, event_type="like"))
             result = True
-    elif action == "save":
+    elif action in ("save", "bookmark"):
         x = Save.query.filter_by(user_id=u.id, post_id=p.id).first()
         if x:
             db.session.delete(x)
@@ -281,14 +356,31 @@ def interaction(post_id, action):
         result = True
     elif action == "view":
         db.session.add(Interaction(user_id=u.id, post_id=p.id, event_type="view"))
+        p.view_count = (p.view_count or 0) + 1
         result = True
     else:
         return {"message": "Unsupported action"}, 400
+
     db.session.commit()
     return {"post": p.to_dict(u.id), "result": result}
 
+@api_bp.post("/posts/<int:post_id>/report")
+@jwt_required()
+def report_post(post_id):
+    u = me_user()
+    p = Post.query.get_or_404(post_id)
+    d = request.get_json(silent=True) or {}
+    reason = str(d.get("reason", "Inappropriate content"))[:100]
+    details = str(d.get("details", ""))[:1000]
+
+    report = Report(reporter_id=u.id, post_id=p.id, reason=reason, details=details)
+    db.session.add(report)
+    db.session.commit()
+    return {"status": "reported", "message": "Thank you for helping keep SocialSentinel safe."}
+
+# Comments
 @api_bp.get("/posts/<int:post_id>/comments")
-def comments(post_id):
+def get_comments(post_id):
     rows = Comment.query.filter_by(post_id=post_id).order_by(Comment.created_at.asc()).all()
     return {"data": [c.to_dict() for c in rows]}
 
@@ -301,144 +393,173 @@ def add_comment(post_id):
     text = str(d.get("text", "")).strip()
     if not text or len(text) > 2000:
         return {"message": "Comment must be 1-2000 characters"}, 400
-    c = Comment(post_id=p.id, user_id=u.id, text=text)
+
+    parent_id = d.get("parent_id")
+    c = Comment(post_id=p.id, user_id=u.id, text=text, parent_id=parent_id)
     db.session.add(c)
+    db.session.flush()
+
+    # Trigger sentiment analysis & update user topic profile
+    sent_res = record_comment_sentiment_and_update_profile(u.id, p.id, c.id, text, p.topic_category)
+    c.sentiment = sent_res["sentiment"]
+    c.sentiment_confidence = sent_res["confidence"]
+
+    try:
+        emo_res = emotion_detection(text)
+        c.emotion = emo_res["emotion"]
+        c.emotion_confidence = emo_res["confidence"]
+    except Exception:
+        pass
+
     if p.author_id != u.id:
         db.session.add(Notification(user_id=p.author_id, actor_id=u.id, type="comment", post_id=p.id))
     db.session.add(Interaction(user_id=u.id, post_id=p.id, event_type="comment"))
+
     db.session.commit()
     return {"comment": c.to_dict()}, 201
 
+# Recommendations
 @api_bp.get("/recommendations/feed")
 @jwt_required(optional=True)
 def feed():
     uid = int(get_jwt_identity()) if get_jwt_identity() else (optional_user_id() or 1)
     u = User.query.get(uid)
     page, limit = page_args()
-    expl = u.preferences.exploration_rate if (u and u.preferences) else 0.15
+    expl = u.preferences.exploration_rate if (u and u.preferences) else 0.20
     q = request.args.get("query", "")
-    return {"data": recommend(uid, q, limit, expl), "page": page}
+    items = recommend(uid, q, limit, expl)
+    viewer = optional_user_id()
+    formatted = [
+        {
+            "post": item["post"].to_dict(viewer) if hasattr(item["post"], "to_dict") else item["post"],
+            "score": item["score"],
+            "reason": item["reason"],
+            "breakdown": item.get("breakdown", {})
+        }
+        for item in items
+    ]
+    return {"data": formatted, "page": page}
 
 @api_bp.get("/recommendations/serendipity")
 @jwt_required(optional=True)
 def serendipity():
     uid = int(get_jwt_identity()) if get_jwt_identity() else (optional_user_id() or 1)
     page, limit = page_args()
-    factor = float(request.args.get("factor", 0.65))
-    return {"data": get_serendipity_feed(uid, limit, factor)}
-
-@api_bp.post("/events")
-@jwt_required()
-def event():
-    u = me_user()
-    d = request.get_json(silent=True) or {}
-    pid = int(d.get("post_id", 0))
-    et = str(d.get("event_type", "view"))
-    if et not in ("view", "long_view", "skip", "not_interested"):
-        return {"message": "Use action endpoints for social interactions"}, 400
-    db.session.add(Interaction(user_id=u.id, post_id=pid, event_type=et, duration_seconds=max(0, float(d.get("duration_seconds", 0)))))
-    db.session.commit()
-    return {"recorded": True}
-
-@api_bp.get("/analytics/overview")
-@jwt_required()
-def analytics():
-    u = me_user()
-    rows = Interaction.query.filter_by(user_id=u.id).all()
-    counts = {}
-    for r in rows:
-        counts[r.event_type] = counts.get(r.event_type, 0) + 1
-    topics = {}
-    for x in rows:
-        p = Post.query.get(x.post_id)
-        if p and p.topic_category:
-            topics[p.topic_category] = topics.get(p.topic_category, 0) + 1
-    return {
-        "data": {
-            "interactions": len(rows),
-            "events": counts,
-            "topics": topics,
-            "posts_created": Post.query.filter_by(author_id=u.id).count(),
-            "followers_count": Follow.query.filter_by(following_id=u.id).count(),
-            "following_count": Follow.query.filter_by(follower_id=u.id).count()
-        }
-    }
-
-@api_bp.get("/notifications")
-@jwt_required()
-def notifications():
-    u = me_user()
-    rows = Notification.query.filter_by(user_id=u.id).order_by(Notification.created_at.desc()).limit(50).all()
-    return {
-        "data": [
-            {
-                "id": n.id,
-                "type": n.type,
-                "read": n.read,
-                "actor": User.query.get(n.actor_id).to_dict() if n.actor_id else None,
-                "created_at": n.created_at.isoformat(),
-                "post_id": n.post_id
-            }
-            for n in rows
-        ]
-    }
-
-@api_bp.post("/notifications/read-all")
-@jwt_required()
-def read_all():
-    Notification.query.filter_by(user_id=me_user().id, read=False).update({"read": True})
-    db.session.commit()
-    return {"ok": True}
-
-@api_bp.get("/search")
-def search():
-    q = (request.args.get("q") or "").strip()
-    page, limit = page_args()
-    if not q:
-        return {"users": [], "posts": [], "topics": []}
-    users = User.query.filter(db.or_(User.username.ilike(f"%{q}%"), User.display_name.ilike(f"%{q}%"))).limit(limit).all()
-    posts = Post.query.filter(db.or_(Post.caption.ilike(f"%{q}%"), Post.hashtags.ilike(f"%{q}%"))).order_by(Post.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+    items = get_serendipity_feed(uid, limit)
     viewer = optional_user_id()
-    return {
-        "users": [x.to_dict() for x in users],
-        "posts": [x.to_dict(viewer) for x in posts]
-    }
+    formatted = [
+        {
+            "post": item["post"].to_dict(viewer) if hasattr(item["post"], "to_dict") else item["post"],
+            "score": item["score"],
+            "reason": item["reason"],
+            "breakdown": item.get("breakdown", {})
+        }
+        for item in items
+    ]
+    return {"data": formatted, "page": page}
 
-@api_bp.post("/sentiment/predict")
+@api_bp.get("/recommendations/explain/<int:post_id>")
 @jwt_required(optional=True)
-def sentiment():
+def explain_post_recommendation(post_id):
+    uid = int(get_jwt_identity()) if get_jwt_identity() else (optional_user_id() or 1)
+    return explain_recommendation(uid, post_id)
+
+# Sentiment & Emotion
+@api_bp.post("/sentiment/predict")
+def predict_sentiment_endpoint():
     d = request.get_json(silent=True) or {}
     text = str(d.get("text", "")).strip()
     if not text:
         return {"message": "Text is required"}, 400
-    uid = int(get_jwt_identity()) if get_jwt_identity() else None
+    uid = optional_user_id()
     return predict_sentiment(text, uid)
 
 @api_bp.post("/sentiment/emotion")
-@jwt_required(optional=True)
-def emotion():
+def predict_emotion_endpoint():
     d = request.get_json(silent=True) or {}
     text = str(d.get("text", "")).strip()
     if not text:
         return {"message": "Text is required"}, 400
     return emotion_detection(text)
 
-@api_bp.get("/ai/explain/<int:post_id>")
+@api_bp.get("/sentiment/history")
 @jwt_required()
-def explain(post_id):
+def sentiment_history():
     u = me_user()
-    p = Post.query.get_or_404(post_id)
-    rows = Interaction.query.filter_by(user_id=u.id).all()
-    same = sum(1 for x in rows if (Post.query.get(x.post_id) and Post.query.get(x.post_id).topic_category == p.topic_category))
-    context = {
-        "post": {"caption": p.caption, "topic": p.topic_category},
-        "signals": {"prior_topic_interactions": same, "author": p.author.username if p.author else "cosmos"},
-        "user": u.to_dict()
+    records = SentimentAnalysis.query.filter_by(user_id=u.id).order_by(SentimentAnalysis.created_at.desc()).limit(50).all()
+    return {
+        "data": [
+            {
+                "id": r.id,
+                "post_id": r.post_id,
+                "sentiment": r.sentiment_label,
+                "confidence": r.confidence_score,
+                "created_at": r.created_at.isoformat()
+            }
+            for r in records
+        ]
     }
-    r, src = generate_ai_response("Explain why this post may be relevant to me.", context)
-    db.session.add(AIInsight(user_id=u.id, prompt=f"Explain post {post_id}", response=r, source=src))
-    db.session.commit()
-    return {"response": r, "source": src, "signals": context["signals"]}
+
+# Search & Explore
+@api_bp.get("/search")
+def search():
+    q = (request.args.get("q") or "").strip()
+    page, limit = page_args()
+    if not q:
+        return {"users": [], "posts": [], "hashtags": []}
+    users = User.query.filter(db.or_(User.username.ilike(f"%{q}%"), User.display_name.ilike(f"%{q}%"))).limit(limit).all()
+    posts = Post.query.filter(db.or_(Post.caption.ilike(f"%{q}%"), Post.hashtags.ilike(f"%{q}%"))).order_by(Post.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+    hashtags = Hashtag.query.filter(Hashtag.tag.ilike(f"%{q.replace('#', '')}%")).order_by(Hashtag.post_count.desc()).limit(10).all()
+    viewer = optional_user_id()
+    return {
+        "users": [x.to_dict() for x in users],
+        "posts": [x.to_dict(viewer) for x in posts],
+        "hashtags": [{"tag": f"#{h.tag}", "count": h.post_count} for h in hashtags]
+    }
+
+@api_bp.get("/search/trending")
+def trending():
+    tags = Hashtag.query.order_by(Hashtag.post_count.desc()).limit(8).all()
+    comms = Community.query.order_by(Community.name.asc()).limit(6).all()
+    return {
+        "hashtags": [{"tag": f"#{h.tag}", "count": h.post_count} for h in tags],
+        "topics": [c.name for c in comms]
+    }
+
+# Analytics & AI Studio
+@api_bp.get("/analytics/overview")
+@jwt_required()
+def analytics():
+    u = me_user()
+    interactions_count = Interaction.query.filter_by(user_id=u.id).count()
+    posts_created = Post.query.filter_by(author_id=u.id).count()
+    followers = Follow.query.filter_by(following_id=u.id).count()
+    following = Follow.query.filter_by(follower_id=u.id).count()
+
+    # Calculate real topic interactions
+    rows = Interaction.query.filter_by(user_id=u.id).all()
+    topics = {}
+    for r in rows:
+        p = Post.query.get(r.post_id)
+        if p and p.topic_category:
+            topics[p.topic_category] = topics.get(p.topic_category, 0) + 1
+
+    # Real sentiment distribution for this user
+    sent_records = SentimentAnalysis.query.filter_by(user_id=u.id).all()
+    sent_dist = {"Positive": 0, "Neutral": 0, "Negative": 0}
+    for sr in sent_records:
+        sent_dist[sr.sentiment_label] = sent_dist.get(sr.sentiment_label, 0) + 1
+
+    return {
+        "data": {
+            "interactions": interactions_count,
+            "posts_created": posts_created,
+            "followers_count": followers,
+            "following_count": following,
+            "topics": topics,
+            "sentiment_distribution": sent_dist
+        }
+    }
 
 @api_bp.post("/ai/ask")
 @jwt_required()
@@ -457,22 +578,31 @@ def ai_ask():
     db.session.commit()
     return {"response": r, "source": src}
 
-# Direct Messaging & Post Sharing
+# Direct Messaging
 @api_bp.get("/conversations")
 @jwt_required()
 def conversations():
     u = me_user()
-    ids = [m.conversation_id for m in ConversationMember.query.filter_by(user_id=u.id).all()]
-    out = []
-    for cid in ids:
-        members = ConversationMember.query.filter_by(conversation_id=cid).all()
-        msgs = Message.query.filter_by(conversation_id=cid).order_by(Message.created_at.desc()).limit(1).all()
-        out.append({
-            "id": cid,
-            "members": [User.query.get(x.user_id).to_dict() for x in members if User.query.get(x.user_id)],
-            "last_message": msgs[0].to_dict() if msgs else None
+    memberships = ConversationMember.query.filter_by(user_id=u.id).all()
+    res = []
+    for m in memberships:
+        c = Conversation.query.get(m.conversation_id)
+        if not c:
+            continue
+        other_members = [
+            cm.user.to_dict() for cm in ConversationMember.query.filter(
+                ConversationMember.conversation_id == c.id,
+                ConversationMember.user_id != u.id
+            ).all() if cm.user
+        ]
+        last_msg = Message.query.filter_by(conversation_id=c.id).order_by(Message.created_at.desc()).first()
+        res.append({
+            "id": c.id,
+            "other_participants": other_members,
+            "last_message": last_msg.to_dict() if last_msg else None,
+            "updated_at": c.updated_at.isoformat()
         })
-    return {"data": out}
+    return {"data": res}
 
 @api_bp.post("/conversations")
 @jwt_required()
@@ -483,8 +613,7 @@ def create_conversation():
     ids = {int(x) for x in ids}
     if len(ids) < 2:
         return {"message": "At least two users required"}, 400
-    
-    # Check if a conversation between these exact two users already exists
+
     if len(ids) == 2:
         other_id = [x for x in ids if x != u.id][0]
         user_convs = {m.conversation_id for m in ConversationMember.query.filter_by(user_id=u.id).all()}
@@ -505,10 +634,10 @@ def create_conversation():
 
 @api_bp.get("/conversations/<int:cid>/messages")
 @jwt_required()
-def messages(cid):
+def get_messages(cid):
     u = me_user()
     if not ConversationMember.query.filter_by(conversation_id=cid, user_id=u.id).first():
-        return auth_error("Not allowed")
+        return auth_error("Not authorized")
     rows = Message.query.filter_by(conversation_id=cid).order_by(Message.created_at.asc()).limit(200).all()
     return {"data": [x.to_dict() for x in rows]}
 
@@ -517,7 +646,7 @@ def messages(cid):
 def send_message(cid):
     u = me_user()
     if not ConversationMember.query.filter_by(conversation_id=cid, user_id=u.id).first():
-        return auth_error("Not allowed")
+        return auth_error("Not authorized")
     d = request.get_json(silent=True) or {}
     body = str(d.get("body", "")).strip()
     shared_post_id = d.get("shared_post_id")
@@ -529,21 +658,29 @@ def send_message(cid):
 
     if not body and not shared_post_id:
         return {"message": "Message body or shared post required"}, 400
-    if len(body) > 5000:
-        return {"message": "Message must be 1-5000 characters"}, 400
 
-    m = Message(
-        conversation_id=cid,
-        sender_id=u.id,
-        body=body or "Shared a post to conversation",
-        shared_post_id=shared_post_id
-    )
+    m = Message(conversation_id=cid, sender_id=u.id, body=body or "Shared an insight to chat", shared_post_id=shared_post_id)
     db.session.add(m)
     for member in ConversationMember.query.filter_by(conversation_id=cid).all():
         if member.user_id != u.id:
             db.session.add(Notification(user_id=member.user_id, actor_id=u.id, type="message"))
     db.session.commit()
     return {"message": m.to_dict()}, 201
+
+# Notifications
+@api_bp.get("/notifications")
+@jwt_required()
+def notifications():
+    u = me_user()
+    rows = Notification.query.filter_by(user_id=u.id).order_by(Notification.created_at.desc()).limit(50).all()
+    return {"data": [n.to_dict() for n in rows]}
+
+@api_bp.post("/notifications/read-all")
+@jwt_required()
+def read_all_notifications():
+    Notification.query.filter_by(user_id=me_user().id, read=False).update({"read": True})
+    db.session.commit()
+    return {"ok": True}
 
 # Communities
 @api_bp.get("/communities")

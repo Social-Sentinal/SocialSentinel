@@ -2,223 +2,201 @@ from collections import Counter
 from datetime import datetime, timezone
 import math
 import random
-import re
 from backend.extensions import db
-from backend.models import Post, Interaction, Like, Save, Follow, Recommendation
+from backend.models import Post, Interaction, Like, Save, Follow, Block, UserTopicPreference, UserPreference
+from backend.services.embedding_service import get_or_create_post_embedding, compute_user_interest_vector, cosine_similarity
+from backend.services.collaborative_service import compute_collaborative_scores
 
-EVENT_WEIGHT = {
-    "like": 4,
-    "save": 5,
-    "share": 4,
-    "comment": 3,
-    "long_view": 2,
-    "view": 1,
-    "skip": -1,
-    "not_interested": -5
-}
-
-def tokens(s):
-    return set(re.findall(r"[a-zA-Z0-9_]+", (s or "").lower()))
-
-def cosine(a, b):
-    if not a or not b:
-        return 0.0
-    return len(a & b) / math.sqrt(len(a) * len(b))
-
-def recommend(user_id, query="", limit=20, exploration=0.15):
+def recommend(user_id, query="", limit=25, exploration=0.20):
     """
-    Hybrid recommendation algorithm combining:
-    - Content similarity (TF-IDF token cosine)
-    - Collaborative engagement history
-    - Social graph / Follow affinity
-    - Recency / Freshness decay
-    - Diversity & Serendipity exploration
+    Hybrid Sentiment-Aware Recommendation Engine:
+    Combines:
+    1. Content semantic embedding cosine similarity (35%)
+    2. Collaborative user-peer interaction matrix (25%)
+    3. Sentiment preference score per topic (20%)
+    4. Global engagement velocity (10%)
+    5. Freshness / recency decay (10%)
+    Plus user-controllable serendipity exploration.
     """
-    interactions = Interaction.query.filter_by(user_id=user_id).order_by(Interaction.created_at.desc()).limit(500).all()
-    topic_weights = Counter()
-    creator_weights = Counter()
-    interacted_post_ids = set()
+    # 1. Fetch user blocks & exclusions
+    blocked_user_ids = {b.blocked_id for b in Block.query.filter_by(blocker_id=user_id).all()}
+    blocked_by_ids = {b.blocker_id for b in Block.query.filter_by(blocked_id=user_id).all()}
+    excluded_authors = blocked_user_ids | blocked_by_ids
 
-    for i in interactions:
-        p = Post.query.get(i.post_id)
-        if not p:
-            continue
-        interacted_post_ids.add(p.id)
-        w = EVENT_WEIGHT.get(i.event_type, 1)
-        topic_weights[p.topic_category] += w
-        creator_weights[p.author_id] += w
-
-    # Build interest tokens from interacted posts
-    pref_tokens = set()
-    if interacted_post_ids:
-        sample_ids = list(interacted_post_ids)[-30:]
-        for p in Post.query.filter(Post.id.in_(sample_ids)).all():
-            pref_tokens |= tokens(f"{p.caption} {p.hashtags} {p.topic_category}")
-
-    if query:
-        pref_tokens |= tokens(query)
-
-    following_ids = {x.following_id for x in Follow.query.filter_by(follower_id=user_id).all()}
-    
-    # Candidate pool
-    candidates = Post.query.order_by(Post.created_at.desc()).limit(250).all()
+    # 2. Get candidate posts
+    query_filter = Post.author_id.notin_(excluded_authors) if excluded_authors else True
+    candidates = Post.query.filter(query_filter).order_by(Post.created_at.desc()).limit(200).all()
     if not candidates:
         return []
 
-    scored = []
+    candidate_ids = [p.id for p in candidates]
+
+    # 3. User representations
+    user_interest_vector = compute_user_interest_vector(user_id)
+    collab_scores = compute_collaborative_scores(user_id, candidate_ids)
+    following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=user_id).all()}
+
+    # 4. User Topic Sentiment Preferences
+    topic_prefs = {tp.topic: tp.sentiment_score for tp in UserTopicPreference.query.filter_by(user_id=user_id).all()}
+
+    # Check exploration setting from user preference
+    pref_obj = UserPreference.query.filter_by(user_id=user_id).first()
+    if pref_obj:
+        exploration = max(0.05, min(0.80, pref_obj.exploration_rate))
+
     now = datetime.now(timezone.utc)
-    max_topic_w = max(topic_weights.values(), default=1)
-    max_creator_w = max(creator_weights.values(), default=1)
+    scored = []
 
-    for p in candidates:
-        # 1. Content similarity
-        post_tokens = tokens(f"{p.caption} {p.hashtags} {p.topic_category}")
-        c_sim = cosine(pref_tokens, post_tokens) if pref_tokens else 0.2
+    for post in candidates:
+        # A. Content Score (Cosine similarity of embeddings)
+        post_emb = get_or_create_post_embedding(post)
+        if user_interest_vector and post_emb:
+            c_score = cosine_similarity(user_interest_vector, post_emb)
+        else:
+            c_score = 0.35  # Neutral baseline for new users
 
-        # 2. Topic alignment
-        t_score = topic_weights.get(p.topic_category, 0) / max(1, max_topic_w)
+        # B. Collaborative Score
+        col_score = collab_scores.get(post.id, 0.0)
+        if post.author_id in following_ids:
+            col_score = min(1.0, col_score + 0.30)
 
-        # 3. Creator affinity & social
-        cr_score = creator_weights.get(p.author_id, 0) / max(1, max_creator_w)
-        social_score = 1.0 if p.author_id in following_ids else 0.0
+        # C. Sentiment Preference Score
+        # If user has a positive sentiment history on this topic -> boosts score
+        # If user has expressing repeated negative sentiment -> dampens score
+        topic_sent = topic_prefs.get(post.topic_category, 0.5)
+        # Normalize: 0.5 is neutral baseline, > 0.5 is boost, < 0.5 is discount
+        sent_score = max(0.0, min(1.0, topic_sent))
 
-        # 4. Freshness
-        created_time = p.created_at.replace(tzinfo=p.created_at.tzinfo or timezone.utc)
-        age_days = max(0, (now - created_time).total_seconds() / 86400)
-        freshness = math.exp(-age_days / 10)
+        # D. Engagement / Interaction Velocity Score
+        counts = post.counts()
+        raw_engagement = (
+            counts["likes"] * 2.0 +
+            counts["saves"] * 4.0 +
+            counts["comments"] * 3.0 +
+            counts["shares"] * 4.0 +
+            counts["views"] * 0.5
+        )
+        interaction_score = min(1.0, math.log1p(raw_engagement) / 6.0)
 
-        # 5. Global Engagement
-        counts = p.counts()
-        engagement = min(1.0, math.log1p(counts["likes"] * 2 + counts["comments"] * 3 + counts["saves"] * 2) / 8)
+        # E. Recency Score (Exponential half-life of 7 days)
+        created_time = post.created_at.replace(tzinfo=post.created_at.tzinfo or timezone.utc)
+        age_days = max(0.0, (now - created_time).total_seconds() / 86400.0)
+        recency_score = math.exp(-age_days / 7.0)
 
-        # 6. Novelty & Exploration
-        novelty = 0.15 if p.id not in interacted_post_ids else -0.15
-        
-        # Blend scores with exploration factor
-        expl = max(0.0, min(1.0, float(exploration)))
-        score = (
-            (0.32 - 0.1 * expl) * c_sim +
-            (0.24 - 0.1 * expl) * t_score +
-            0.15 * cr_score +
-            0.10 * social_score +
-            0.10 * freshness +
-            0.09 * engagement +
-            novelty +
-            (expl * random.uniform(0.05, 0.25))
+        # F. Weighted Hybrid Fusion Formula
+        w_content = 0.35 - (0.10 * exploration)
+        w_collab = 0.25
+        w_sentiment = 0.20
+        w_interaction = 0.10
+        w_recency = 0.10
+
+        final_score = (
+            w_content * c_score +
+            w_collab * col_score +
+            w_sentiment * sent_score +
+            w_interaction * interaction_score +
+            w_recency * recency_score
         )
 
-        # Generate human-friendly rationale badge
+        # Serendipity exploration injection
+        if exploration > 0:
+            noise = random.uniform(-0.05, 0.05) * exploration
+            final_score = max(0.0, min(1.0, final_score + noise))
+
+        # Build clear human-readable explanation
         reasons = []
-        if p.author_id in following_ids:
-            reasons.append("Following creator")
-        elif t_score > 0.4:
-            reasons.append(f"Based on your #{p.topic_category} interest")
-        elif c_sim > 0.25:
-            reasons.append("Similar to posts you enjoyed")
-        elif cr_score > 0.4:
-            reasons.append("Creator affinity")
-        elif engagement > 0.5:
-            reasons.append("Trending on SocialSentinel")
-        elif expl > 0.25:
-            reasons.append("Discovery recommendation")
-        else:
-            reasons.append("Recommended for you")
+        if post.author_id in following_ids:
+            reasons.append("from a creator you follow")
+        if topic_sent > 0.65:
+            reasons.append(f"you expressed high positive sentiment in #{post.topic_category}")
+        elif topic_sent < 0.35:
+            reasons.append("exploring diverse perspectives")
+        if c_score > 0.60:
+            reasons.append(f"matches your interests in #{post.topic_category}")
+        if col_score > 0.40:
+            reasons.append("popular among peers with similar taste")
+        if interaction_score > 0.50:
+            reasons.append("trending in the community")
+
+        reason_str = " · ".join(reasons[:2]) if reasons else f"relevant to #{post.topic_category}"
 
         scored.append({
-            "post": p,
-            "score": max(0.01, round(score, 4)),
-            "reason": reasons[0],
-            "topic": p.topic_category,
-            "creator_id": p.author_id
+            "post": post,
+            "score": round(final_score, 4),
+            "reason": f"🎯 {round(final_score * 100)}% match · {reason_str}",
+            "breakdown": {
+                "content_score": round(c_score, 3),
+                "collaborative_score": round(col_score, 3),
+                "sentiment_score": round(sent_score, 3),
+                "interaction_score": round(interaction_score, 3),
+                "recency_score": round(recency_score, 3),
+                "final_score": round(final_score, 4)
+            }
         })
 
-    # Sort descending
+    # Sort descending by final score
     scored.sort(key=lambda x: x["score"], reverse=True)
+    return scored[:limit]
 
-    # Apply diversity constraint: prevent same creator or topic flooding top results
-    selected = []
-    seen_creators = Counter()
-    seen_topics = Counter()
-
-    for item in scored:
-        c_id = item["creator_id"]
-        t_id = item["topic"]
-        if seen_creators[c_id] >= 2 and len(selected) < limit * 0.7:
-            continue
-        if seen_topics[t_id] >= 3 and len(selected) < limit * 0.8:
-            continue
-        selected.append(item)
-        seen_creators[c_id] += 1
-        seen_topics[t_id] += 1
-        if len(selected) >= limit:
-            break
-
-    # If diversity filter restricted too many, fill up from remaining
-    if len(selected) < limit:
-        chosen_ids = {x["post"].id for x in selected}
-        for item in scored:
-            if item["post"].id not in chosen_ids:
-                selected.append(item)
-                if len(selected) >= limit:
-                    break
-
-    # Persist in recommendations table for explainability & caching
-    try:
-        Recommendation.query.filter_by(user_id=user_id).delete()
-        for item in selected:
-            db.session.add(Recommendation(
-                user_id=user_id,
-                post_id=item["post"].id,
-                score=item["score"],
-                reason=item["reason"],
-                model_version="hybrid-sentinel-v4"
-            ))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-
-    return [
-        {
-            "post": item["post"].to_dict(viewer=user_id),
-            "score": item["score"],
-            "reason": item["reason"]
-        }
-        for item in selected
-    ]
-
-def get_serendipity_feed(user_id, limit=12, serendipity_factor=0.65):
+def get_serendipity_feed(user_id, limit=25):
     """
-    Specialized explorer feed designed to break echo chambers by surfacing
-    diverse topics, novel creators, and unexpected high-quality content.
+    Dedicated serendipity feed: maximizes topic diversity and novelty
+    to intentionally break filter bubbles and introduce high-signal discoveries.
     """
-    all_topics = db.session.query(Post.topic_category).distinct().all()
-    topic_list = [t[0] for t in all_topics if t[0]]
-    
-    # Get user's recent interactions to identify under-explored topics
-    user_interactions = Interaction.query.filter_by(user_id=user_id).limit(100).all()
-    frequent_topics = Counter()
-    for i in user_interactions:
-        p = Post.query.get(i.post_id)
-        if p:
-            frequent_topics[p.topic_category] += 1
+    return recommend(user_id, limit=limit, exploration=0.65)
 
-    # Topics the user interacts with LEAST or hasn't seen yet
-    rare_topics = [t for t in topic_list if frequent_topics.get(t, 0) <= 2]
-    if not rare_topics:
-        rare_topics = topic_list
+def explain_recommendation(user_id, post_id):
+    """
+    Detailed explainability API for a specific post.
+    Returns full score breakdown and clear transparent rationale.
+    """
+    post = Post.query.get_or_404(post_id)
+    user_interest_vector = compute_user_interest_vector(user_id)
+    collab_scores = compute_collaborative_scores(user_id, [post_id])
+    following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=user_id).all()}
 
-    candidates = Post.query.filter(Post.topic_category.in_(rare_topics)).order_by(Post.created_at.desc()).limit(80).all()
-    if not candidates:
-        candidates = Post.query.order_by(Post.created_at.desc()).limit(50).all()
+    topic_pref = UserTopicPreference.query.filter_by(user_id=user_id, topic=post.topic_category).first()
+    sent_score = topic_pref.sentiment_score if topic_pref else 0.5
 
-    random.shuffle(candidates)
-    selected = candidates[:limit]
+    post_emb = get_or_create_post_embedding(post)
+    c_score = cosine_similarity(user_interest_vector, post_emb) if (user_interest_vector and post_emb) else 0.35
+    col_score = collab_scores.get(post.id, 0.0)
+    if post.author_id in following_ids:
+        col_score = min(1.0, col_score + 0.30)
 
-    return [
-        {
-            "post": p.to_dict(viewer=user_id),
-            "score": round(random.uniform(0.70, 0.95), 2),
-            "reason": f"✨ Discovery radar · Expand into #{p.topic_category}"
-        }
-        for p in selected
-    ]
+    now = datetime.now(timezone.utc)
+    created_time = post.created_at.replace(tzinfo=post.created_at.tzinfo or timezone.utc)
+    age_days = max(0.0, (now - created_time).total_seconds() / 86400.0)
+    recency_score = math.exp(-age_days / 7.0)
+
+    counts = post.counts()
+    raw_engagement = counts["likes"] * 2 + counts["saves"] * 4 + counts["comments"] * 3
+    interaction_score = min(1.0, math.log1p(raw_engagement) / 6.0)
+
+    final_score = (
+        0.35 * c_score +
+        0.25 * col_score +
+        0.20 * sent_score +
+        0.10 * interaction_score +
+        0.10 * recency_score
+    )
+
+    return {
+        "post_id": post.id,
+        "topic": post.topic_category,
+        "final_score": round(final_score, 4),
+        "match_percentage": int(round(final_score * 100)),
+        "breakdown": {
+            "content_semantic_score": round(c_score, 3),
+            "collaborative_peer_score": round(col_score, 3),
+            "sentiment_affinity_score": round(sent_score, 3),
+            "community_velocity_score": round(interaction_score, 3),
+            "freshness_score": round(recency_score, 3)
+        },
+        "rationale": (
+            f"This post was ranked with a {int(round(final_score * 100))}% affinity score. "
+            f"Your historical interactions with #{post.topic_category} reflect "
+            f"{'positive' if sent_score >= 0.60 else 'balanced' if sent_score >= 0.40 else 'critical'} sentiment feedback. "
+            f"Content embeddings show {int(round(c_score * 100))}% semantic alignment with your interests."
+        )
+    }

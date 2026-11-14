@@ -76,7 +76,7 @@ def generate_ai_response(prompt, context):
             
     if "sentiment" in p_lower or "mood" in p_lower:
         return (
-            "🛡️ SocialSentinel analyzes tone and emotion across posts using a local Scikit-Learn TF-IDF engine. "
+            "🛡️ SocialSentinel analyzes tone and emotion across posts using a zero-latency lexical pattern engine. "
             "This empowers you to steer your feed toward constructive, inspiring, and high-signal content.",
             "sentinel-nlp-grounded"
         )

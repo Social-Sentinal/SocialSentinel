@@ -1,7 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { api } from '../services/api';
 import MediaImage from './MediaImage';
-import { Heart, MessageSquare, Bookmark, Share2, Sparkles } from 'lucide-react';
+import { Heart, MessageSquare, Bookmark, Share2, Sparkles, Film, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+
+export function PostMediaView({ post, onOpenDetail }) {
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const videoRef = useRef(null);
+
+  const videoSrc = post.video_url || post.videoUrl;
+  const isVideo = Boolean(videoSrc || post.media_type === 'video');
+
+  const togglePlay = (e) => {
+    e.stopPropagation();
+    if (!videoRef.current) return;
+    if (playing) {
+      videoRef.current.pause();
+      setPlaying(false);
+    } else {
+      videoRef.current.play().then(() => setPlaying(true)).catch(() => {});
+    }
+  };
+
+  const toggleMute = (e) => {
+    e.stopPropagation();
+    if (!videoRef.current) return;
+    videoRef.current.muted = !videoRef.current.muted;
+    setMuted(videoRef.current.muted);
+  };
+
+  if (isVideo && videoSrc) {
+    return (
+      <div className="post-media-frame post-video-frame" onClick={() => onOpenDetail(post)}>
+        <video
+          ref={videoRef}
+          src={videoSrc}
+          poster={post.media_url}
+          className="post-video-player"
+          playsInline
+          loop
+          muted={muted}
+          preload="metadata"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+        />
+        <div className="video-overlay-badge">
+          <Film size={11} />
+          <span>Reel</span>
+        </div>
+        <div className="video-action-cluster" onClick={e => e.stopPropagation()}>
+          <button className="video-ctrl-btn" onClick={togglePlay} title={playing ? "Pause" : "Play"}>
+            {playing ? <Pause size={14} /> : <Play size={14} />}
+          </button>
+          <button className="video-ctrl-btn" onClick={toggleMute} title={muted ? "Unmute" : "Mute"}>
+            {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (post.media_url) {
+    return (
+      <div className="post-media-frame" onClick={() => onOpenDetail(post)} style={{ cursor: 'pointer' }}>
+        <MediaImage
+          src={post.media_url}
+          fallbackText={post.caption}
+          className="post-media-img"
+        />
+      </div>
+    );
+  }
+
+  return null;
+}
 
 export function PostCardItem({ post, user, refresh, onOpenShare, onOpenDetail, onExplain }) {
   const [liked, setLiked] = useState(post.liked);
@@ -127,16 +199,8 @@ export function PostCardItem({ post, user, refresh, onOpenShare, onOpenDetail, o
         </div>
       )}
 
-      {/* Media Image Attachment */}
-      {post.media_url && (
-        <div className="post-media-frame" onClick={() => onOpenDetail(post)} style={{ cursor: 'pointer' }}>
-          <MediaImage
-            src={post.media_url}
-            fallbackText={post.caption}
-            className="post-media-img"
-          />
-        </div>
-      )}
+      {/* Real Media (Video / Reel or High-Res Photo) */}
+      <PostMediaView post={post} onOpenDetail={onOpenDetail} />
 
       {/* Explainability Recommendation Chip */}
       {post.recommendation_reason && (

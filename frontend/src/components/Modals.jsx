@@ -2,35 +2,63 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { TOPICS } from '../constants';
 import MediaImage from './MediaImage';
-import { X, Sparkles, Image, Send } from 'lucide-react';
+import { X, Sparkles, Image, Film, FileText, Send, Hash } from 'lucide-react';
+
+const MODAL_TAGS = ['#SocialSentinel', '#AI', '#Photography', '#Space', '#LifeStories', '#Nature', '#Reels'];
 
 export function CreatePostModal({ user, onClose, onCreated }) {
   const [caption, setCaption] = useState('');
   const [topic, setTopic] = useState('AI & Tech');
   const [hashtags, setHashtags] = useState('');
+  const [mediaType, setMediaType] = useState('image'); // 'story' | 'image' | 'video'
   const [mediaUrl, setMediaUrl] = useState('');
   const [sentiment, setSentiment] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (caption.trim().length > 6) {
+    if (caption.trim().length > 5) {
       const timer = setTimeout(async () => {
         try {
           const s = await api.predictSentiment(caption);
           setSentiment(s);
         } catch (err) {}
-      }, 350);
+      }, 300);
       return () => clearTimeout(timer);
     } else {
       setSentiment(null);
     }
   }, [caption]);
 
+  const handleAddTag = (tag) => {
+    if (hashtags.includes(tag)) return;
+    setHashtags(prev => (prev ? `${prev} ${tag}` : tag).trim());
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      setMediaUrl(previewUrl);
+      if (file.type.startsWith('video/')) {
+        setMediaType('video');
+      } else {
+        setMediaType('image');
+      }
+    }
+  };
+
   const handleSubmit = async () => {
     if (!caption.trim()) return;
     setSubmitting(true);
     try {
-      await api.post({ caption, topic, hashtags, media_url: mediaUrl });
+      await api.post({
+        caption,
+        topic,
+        hashtags,
+        media_url: mediaType === 'image' ? mediaUrl : '',
+        video_url: mediaType === 'video' ? mediaUrl : '',
+        media_type: mediaType === 'video' ? 'video' : (mediaUrl ? 'image' : 'text')
+      });
       onCreated();
     } catch (err) {
       alert(err.message || 'Failed to create post');
@@ -41,11 +69,11 @@ export function CreatePostModal({ user, onClose, onCreated }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
+      <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 540 }}>
         <div className="modal-header">
           <div className="modal-title">
             <Sparkles size={18} color="var(--primary)" />
-            <span>Create New Post</span>
+            <span>Create New Post / Reel</span>
           </div>
           <button
             onClick={onClose}
@@ -55,75 +83,145 @@ export function CreatePostModal({ user, onClose, onCreated }) {
           </button>
         </div>
 
+        {/* Media Type Tabs */}
+        <div className="composer-tab-bar" style={{ marginBottom: 12 }}>
+          <button
+            type="button"
+            className={`composer-tab-btn ${mediaType === 'story' ? 'active' : ''}`}
+            onClick={() => { setMediaType('story'); setMediaUrl(''); }}
+          >
+            <FileText size={14} />
+            <span>Story</span>
+          </button>
+          <button
+            type="button"
+            className={`composer-tab-btn ${mediaType === 'image' ? 'active' : ''}`}
+            onClick={() => setMediaType('image')}
+          >
+            <Image size={14} />
+            <span>Photo</span>
+          </button>
+          <button
+            type="button"
+            className={`composer-tab-btn ${mediaType === 'video' ? 'active' : ''}`}
+            onClick={() => setMediaType('video')}
+          >
+            <Film size={14} />
+            <span>Video / Reel</span>
+          </button>
+        </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <textarea
             className="input-field"
-            placeholder="Share your insight or discovery with SocialSentinel…"
+            placeholder={
+              mediaType === 'video'
+                ? "Describe your reel, video dispatch, or story…"
+                : mediaType === 'image'
+                ? "Write a caption for your image…"
+                : "Share your insight or discovery with SocialSentinel…"
+            }
             value={caption}
             onChange={e => setCaption(e.target.value)}
-            style={{ minHeight: 100, resize: 'vertical' }}
+            style={{ minHeight: 90, resize: 'vertical' }}
           />
 
           {sentiment && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-              <span style={{ color: 'var(--text-muted)' }}>Predicted tone:</span>
+            <div className="composer-sentiment-meter" style={{ marginTop: 0 }}>
+              <span style={{ color: 'var(--text-muted)' }}>Tone Predictor:</span>
               <span className={`sentiment-badge ${(sentiment.sentiment || 'neutral').toLowerCase()}`}>
                 {sentiment.sentiment} ({Math.round(sentiment.confidence * 100)}%)
               </span>
+              {sentiment.emotion && (
+                <span className="emotion-pill">{sentiment.emotion}</span>
+              )}
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Topic Category</label>
-              <select
-                className="input-field"
-                value={topic}
-                onChange={e => setTopic(e.target.value)}
-                style={{ marginTop: 4 }}
-              >
-                {TOPICS.slice(1).map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </div>
+          {/* Media URL / Upload Input for Photo & Video */}
+          {mediaType !== 'story' && (
+            <div className="composer-media-box" style={{ marginTop: 0 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  className="composer-media-url-input"
+                  placeholder={mediaType === 'video' ? "Paste MP4 or Reel URL…" : "Paste Image URL…"}
+                  value={mediaUrl}
+                  onChange={e => setMediaUrl(e.target.value)}
+                />
+                <label className="btn-file-upload">
+                  <span>Upload</span>
+                  <input type="file" accept={mediaType === 'video' ? "video/*" : "image/*"} onChange={handleFileUpload} style={{ display: 'none' }} />
+                </label>
+                {mediaUrl && (
+                  <button className="btn-clear-media" onClick={() => setMediaUrl('')}>
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
 
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Hashtags</label>
-              <input
-                className="input-field"
-                placeholder="#AI #Dev"
-                value={hashtags}
-                onChange={e => setHashtags(e.target.value)}
-                style={{ marginTop: 4 }}
-              />
+              {mediaUrl && (
+                <div className="composer-preview-container">
+                  {mediaType === 'video' ? (
+                    <video src={mediaUrl} controls playsInline muted className="composer-video-preview" />
+                  ) : (
+                    <img src={mediaUrl} alt="Preview" referrerPolicy="no-referrer" crossOrigin="anonymous" className="composer-image-preview" />
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Topic Community Selection */}
+          <div>
+            <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>
+              Topic Community
+            </label>
+            <div className="composer-topic-pills">
+              {TOPICS.slice(1).map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  className={`composer-topic-chip ${topic === t ? 'active' : ''}`}
+                  onClick={() => setTopic(t)}
+                >
+                  {t}
+                </button>
+              ))}
             </div>
           </div>
 
+          {/* Hashtags Input & Suggested Chips */}
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Image size={13} />
-              <span>Image URL (Optional)</span>
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)' }}>Hashtags</label>
+              <span className="composer-char-count">{caption.length} / 2000</span>
+            </div>
             <input
               className="input-field"
-              placeholder="https://images.unsplash.com/..."
-              value={mediaUrl}
-              onChange={e => setMediaUrl(e.target.value)}
-              style={{ marginTop: 4 }}
+              placeholder="#AI #Photography #Space"
+              value={hashtags}
+              onChange={e => setHashtags(e.target.value)}
             />
+            <div className="composer-tag-chips" style={{ marginTop: 6 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Suggestions:</span>
+              {MODAL_TAGS.map(tag => (
+                <button
+                  key={tag}
+                  type="button"
+                  className={`tag-chip-btn ${hashtags.includes(tag) ? 'selected' : ''}`}
+                  onClick={() => handleAddTag(tag)}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {mediaUrl && (
-            <div style={{ maxHeight: 160, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border)' }}>
-              <img src={mediaUrl} alt="Preview" style={{ width: '100%', height: 160, objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
-            </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
             <button className="btn-secondary" onClick={onClose}>Cancel</button>
             <button className="btn-primary" onClick={handleSubmit} disabled={submitting || !caption.trim()}>
-              {submitting ? 'Publishing…' : 'Publish'}
+              <Send size={13} />
+              <span>{submitting ? 'Publishing…' : 'Publish Dispatch'}</span>
             </button>
           </div>
         </div>
@@ -213,15 +311,24 @@ export function ShareToChatModal({ user, post, onClose, onSuccess }) {
 }
 
 export function PostDetailModal({ user, post, onClose, onUpdate, onOpenShare }) {
-  const [comments, setComments] = useState([]);
+  const initialComments = (post.comments && post.comments.length > 0) ? post.comments : [];
+  const [comments, setComments] = useState(initialComments);
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const load = async () => {
     try {
       const res = await api.comments(post.id);
-      setComments(res.data || []);
-    } catch (err) {}
+      if (res.data && res.data.length > 0) {
+        setComments(res.data);
+      } else if (post.comments && post.comments.length > 0) {
+        setComments(post.comments);
+      }
+    } catch (err) {
+      if (post.comments && post.comments.length > 0) {
+        setComments(post.comments);
+      }
+    }
   };
 
   useEffect(() => {
@@ -270,11 +377,29 @@ export function PostDetailModal({ user, post, onClose, onUpdate, onOpenShare }) 
             {post.caption}
           </p>
 
-          {post.media_url && (
-            <div style={{ maxHeight: 240, borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-              <img src={post.media_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {(post.video_url || post.videoUrl) ? (
+            <div style={{ maxHeight: 320, borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: '#000' }}>
+              <video
+                src={post.video_url || post.videoUrl}
+                poster={post.media_url}
+                controls
+                playsInline
+                autoPlay
+                muted
+                style={{ width: '100%', maxHeight: 320, objectFit: 'contain' }}
+              />
             </div>
-          )}
+          ) : post.media_url ? (
+            <div style={{ maxHeight: 280, borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: '#000' }}>
+              <img
+                src={post.media_url}
+                alt=""
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
+                style={{ width: '100%', maxHeight: 280, objectFit: 'contain' }}
+              />
+            </div>
+          ) : null}
 
           <hr style={{ borderColor: 'var(--border)', margin: '4px 0' }} />
 

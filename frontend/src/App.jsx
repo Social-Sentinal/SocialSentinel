@@ -33,7 +33,6 @@ const NAV_ITEMS = [
 ];
 
 import { FeedStream, QuickComposer } from './pages/FeedStream';
-import { RightSidebarRail } from './components/RightSidebarRail';
 import { MessengerView } from './pages/MessengerView';
 import { ExploreStream } from './pages/ExploreStream';
 import { CommunitiesPage } from './pages/CommunitiesPage';
@@ -202,45 +201,27 @@ export default function App() {
       {/* Main Content Area */}
       <main className="app-container">
         {activeTab === 'feed' && (
-          <div className="layout-grid">
-            <div className="feed-column">
-              <QuickComposer user={user} onPosted={refreshFeed} />
-              <FeedStream
-                user={user}
-                feedTrigger={feedTrigger}
-                refreshFeed={refreshFeed}
-                onOpenShare={setSharePost}
-                onOpenDetail={setDetailPost}
-                onExplain={setExplainData}
-              />
-            </div>
-            <div className="rail-column">
-              <RightSidebarRail
-                user={user}
-                onTopicClick={() => setActiveTab('feed')}
-                onRefreshFeed={refreshFeed}
-              />
-            </div>
+          <div className="feed-container">
+            <QuickComposer user={user} onPosted={refreshFeed} />
+            <FeedStream
+              user={user}
+              feedTrigger={feedTrigger}
+              refreshFeed={refreshFeed}
+              onOpenShare={setSharePost}
+              onOpenDetail={setDetailPost}
+              onExplain={setExplainData}
+            />
           </div>
         )}
 
         {activeTab === 'explore' && (
-          <div className="layout-grid">
-            <div className="feed-column">
-              <ExploreStream
-                user={user}
-                onOpenShare={setSharePost}
-                onOpenDetail={setDetailPost}
-                onExplain={setExplainData}
-              />
-            </div>
-            <div className="rail-column">
-              <RightSidebarRail
-                user={user}
-                onTopicClick={() => setActiveTab('feed')}
-                onRefreshFeed={refreshFeed}
-              />
-            </div>
+          <div className="feed-container">
+            <ExploreStream
+              user={user}
+              onOpenShare={setSharePost}
+              onOpenDetail={setDetailPost}
+              onExplain={setExplainData}
+            />
           </div>
         )}
 
@@ -276,23 +257,14 @@ export default function App() {
         )}
 
         {activeTab === 'profile' && (
-          <div className="layout-grid">
-            <div className="feed-column">
-              <ProfileStream
-                user={user}
-                setUser={setUser}
-                onOpenShare={setSharePost}
-                onOpenDetail={setDetailPost}
-                onExplain={setExplainData}
-              />
-            </div>
-            <div className="rail-column">
-              <RightSidebarRail
-                user={user}
-                onTopicClick={() => setActiveTab('feed')}
-                onRefreshFeed={refreshFeed}
-              />
-            </div>
+          <div className="feed-container">
+            <ProfileStream
+              user={user}
+              setUser={setUser}
+              onOpenShare={setSharePost}
+              onOpenDetail={setDetailPost}
+              onExplain={setExplainData}
+            />
           </div>
         )}
       </main>
