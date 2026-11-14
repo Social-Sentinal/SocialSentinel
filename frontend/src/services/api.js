@@ -3,6 +3,24 @@ const BASE = import.meta.env.VITE_API_URL || '/api/v1';
 let access = localStorage.getItem('cosmos_access') || localStorage.getItem('ss_access');
 const refresh = () => localStorage.getItem('cosmos_refresh') || localStorage.getItem('ss_refresh');
 
+function formatQuery(params) {
+  if (!params) return '';
+  if (typeof params === 'string') {
+    return params.startsWith('?') ? params : `?${params}`;
+  }
+  if (typeof params === 'object') {
+    const sp = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== '' && v !== 'All') {
+        sp.append(k, v);
+      }
+    }
+    const qs = sp.toString();
+    return qs ? `?${qs}` : '';
+  }
+  return '';
+}
+
 async function request(path, opt = {}) {
   let r = await fetch(BASE + path, {
     ...opt,
@@ -82,9 +100,9 @@ export const api = {
   follow: (userId) => request(`/users/${userId}/follow`, { method: 'POST' }),
 
   // Posts & Feed
-  posts: (params = '') => request('/posts' + params),
-  feed: (params = '') => request('/recommendations/feed' + params),
-  serendipityFeed: (params = '') => request('/recommendations/serendipity' + params),
+  posts: (params = '') => request('/posts' + formatQuery(params)),
+  feed: (params = '') => request('/recommendations/feed' + formatQuery(params)),
+  serendipityFeed: (params = '') => request('/recommendations/serendipity' + formatQuery(params)),
   post: (body) => request('/posts', { method: 'POST', body: JSON.stringify(body) }),
   deletePost: (id) => request(`/posts/${id}`, { method: 'DELETE' }),
   action: (id, act) => request(`/posts/${id}/${act}`, { method: 'POST' }),
@@ -96,7 +114,7 @@ export const api = {
   search: (q) => request('/search?q=' + encodeURIComponent(q)),
   communities: () => request('/communities'),
   joinCommunity: (id) => request(`/communities/${id}/join`, { method: 'POST' }),
-  communityPosts: (slug, params = '') => request(`/communities/${slug}/posts` + params),
+  communityPosts: (slug, params = '') => request(`/communities/${slug}/posts` + formatQuery(params)),
 
   // Analytics & Notifications
   analytics: () => request('/analytics/overview'),
@@ -121,47 +139,20 @@ export const api = {
     })
 };
 
-// Named functions for backwards compatibility with existing legacy components
+// Named helper functions for components
 export const fetchPosts = (page = 1, limit = 20, q = '', topic = '', sentiment = '') => {
-  let url = `/posts?page=${page}&limit=${limit}`;
-  if (q) url += `&q=${encodeURIComponent(q)}`;
-  if (topic && topic !== 'All') url += `&topic=${encodeURIComponent(topic)}`;
-  if (sentiment && sentiment !== 'All') url += `&sentiment=${encodeURIComponent(sentiment)}`;
-  return request(url);
+  return api.posts({ page, limit, q, topic, sentiment });
 };
 
 export const fetchFeedRecommendations = (query = '', limit = 20) => {
-  return request(`/recommendations/feed?limit=${limit}&query=${encodeURIComponent(query)}`);
+  return api.feed({ limit, query });
 };
 
 export const fetchAnalyticsOverview = () => api.analytics();
-
-export const fetchLiveInstagramData = async () => {
-  return api.posts('?limit=15');
-};
-
-export const fetchUserWellbeing = async () => {
-  return { status: 'optimal', balance_score: 92, mindful_minutes: 45 };
-};
-
-export const fetchContentRecommendations = async () => {
-  return request('/recommendations/feed?limit=10');
-};
-
-export const fetchCollaborativeRecommendations = async () => {
-  return request('/recommendations/serendipity?limit=10');
-};
-
 export const createNewPost = (postData) => api.post(postData);
-
 export const predictSentimentText = (text) => api.predictSentiment(text);
-
 export const fetchEmotionDetection = (text) => api.predictEmotion(text);
-
 export const toggleLikePost = (postId) => api.action(postId, 'like');
-
 export const addCommentToPost = (postId, comment) => api.comment(postId, comment.text || comment);
-
 export const logUserInteraction = (data) => api.event(data);
-
 export const fetchUserProfile = (username) => api.getUser(username);

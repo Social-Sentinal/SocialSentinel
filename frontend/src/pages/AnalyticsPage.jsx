@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import MediaImage from '../components/MediaImage';
 import { BarChart3 } from 'lucide-react';
 
 export function AnalyticsPage({ user }) {

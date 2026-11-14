@@ -1,14 +1,14 @@
 import logging
 import os
 from pathlib import Path
-from flask import Flask, request, send_from_directory
+from flask import Flask, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from backend.config import Config, FRONTEND_DIST_DIR
+from backend.config import Config
 from backend.extensions import db, jwt, cors, limiter
 
 def create_app(config_class=Config):
-    app = Flask(__name__, static_folder=str(FRONTEND_DIST_DIR), static_url_path="")
+    app = Flask(__name__)
     app.config.from_object(config_class)
     
     db.init_app(app)
@@ -23,9 +23,13 @@ def create_app(config_class=Config):
         db.create_all()
         seed_database()
         
+    @app.get("/")
+    def root():
+        return {"status": "ok", "service": "SocialSentinel API", "version": "5.0.0"}
+
     @app.get("/health")
     def health():
-        return {"status": "ok", "service": "SocialSentinel", "version": "4.2.0"}
+        return {"status": "ok", "service": "SocialSentinel", "version": "5.0.0"}
         
     @app.get("/ready")
     def ready():
@@ -34,18 +38,6 @@ def create_app(config_class=Config):
             return {"status": "ready"}
         except Exception:
             return {"status": "not_ready"}, 503
-            
-    @app.route("/", defaults={"path": ""})
-    @app.route("/<path:path>")
-    def spa(path):
-        if path.startswith("api/"):
-            return {"status": "error", "message": "Not Found"}, 404
-        target = FRONTEND_DIST_DIR / path
-        if path and target.exists():
-            return send_from_directory(str(FRONTEND_DIST_DIR), path)
-        if (FRONTEND_DIST_DIR / "index.html").exists():
-            return send_from_directory(str(FRONTEND_DIST_DIR), "index.html")
-        return "SocialSentinel Platform API is Running.", 200
 
     @app.errorhandler(500)
     def err(e):
@@ -56,7 +48,6 @@ def create_app(config_class=Config):
 
 def seed_database():
     from backend.models import User, UserPreference, Post, Community, CommunityMember, Follow, Like, Comment, Interaction, ModelVersion
-    import pandas as pd
     
     # 1. Model versions
     if ModelVersion.query.count() == 0:

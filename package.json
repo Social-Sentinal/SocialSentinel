@@ -5,10 +5,11 @@
   "description": "SocialSentinel - Intelligent Social Network with NLP Sentiment & Hybrid Recommendations",
   "scripts": {
     "start": "python run.py",
+    "dev": "npm --prefix frontend run dev",
     "dev:backend": "python run.py",
     "dev:frontend": "npm --prefix frontend run dev",
     "build:frontend": "npm --prefix frontend run build",
-    "build": "npm --prefix frontend run build",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
     "test": "pytest"
   }
 }
