@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import MediaImage from '../components/MediaImage';
 import { PostCardItem } from '../components/PostCardItem';
-import { Users } from 'lucide-react';
+import { Users, ArrowLeft } from 'lucide-react';
 
 export function CommunitiesPage({ user, onOpenShare, onOpenDetail, onExplain }) {
   const [communities, setCommunities] = useState([]);
@@ -43,69 +42,95 @@ export function CommunitiesPage({ user, onOpenShare, onOpenDetail, onExplain }) 
   if (activeCommunity) {
     return (
       <div className="fullwidth-page">
-        <button className="btn-secondary" onClick={() => setActiveCommunity(null)} style={{ marginBottom: 16 }}>&larr; Back to Communities</button>
-        <div className="sentinel-card">
-          <div className="community-banner-strip" style={{ background: activeCommunity.banner_gradient, height: 100, borderRadius: 8, display: 'flex', alignItems: 'center', padding: 20 }}>
-            <span style={{ fontSize: 40 }}>{activeCommunity.icon}</span>
-          </div>
-          <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h2>{activeCommunity.name}</h2>
-              <p style={{ color: 'var(--text-secondary)' }}>{activeCommunity.description}</p>
+        <button
+          className="btn-secondary"
+          onClick={() => setActiveCommunity(null)}
+          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        >
+          <ArrowLeft size={15} /> Back to Communities
+        </button>
+
+        <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: 36 }}>{activeCommunity.icon}</span>
+            <div style={{ flex: 1 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700 }}>{activeCommunity.name}</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13.5, marginTop: 2 }}>{activeCommunity.description}</p>
             </div>
             <button
               className={activeCommunity.is_member ? 'btn-secondary' : 'btn-primary'}
-              onClick={(e) => { handleToggle(e, activeCommunity.id); setActiveCommunity({ ...activeCommunity, is_member: !activeCommunity.is_member }) }}
+              onClick={(e) => {
+                handleToggle(e, activeCommunity.id);
+                setActiveCommunity({ ...activeCommunity, is_member: !activeCommunity.is_member });
+              }}
             >
-              {activeCommunity.is_member ? 'Joined' : '+ Join Community'}
+              {activeCommunity.is_member ? 'Joined' : 'Join Community'}
             </button>
           </div>
         </div>
-        
-        <h3 style={{ marginTop: 24, marginBottom: 16 }}>Community Posts</h3>
-        {posts.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>No posts in this community yet.</p> : posts.map(p => (
-          <PostCardItem
-            key={p.id}
-            post={p}
-            user={user}
-            refresh={() => loadPosts(activeCommunity.slug)}
-            onOpenShare={onOpenShare}
-            onOpenDetail={onOpenDetail}
-            onExplain={onExplain}
-          />
-        ))}
+
+        <h3 style={{ fontSize: 16, fontWeight: 700, marginTop: 12 }}>Community Posts</h3>
+        {posts.length === 0 ? (
+          <div className="card" style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
+            No posts in this community yet. Be the first to start a conversation!
+          </div>
+        ) : (
+          posts.map(p => (
+            <PostCardItem
+              key={p.id}
+              post={p}
+              user={user}
+              refresh={() => loadPosts(activeCommunity.slug)}
+              onOpenShare={onOpenShare}
+              onOpenDetail={onOpenDetail}
+              onExplain={onExplain}
+            />
+          ))
+        )}
       </div>
     );
   }
 
   return (
     <div className="fullwidth-page">
-      <div className="sentinel-card">
-        <h2 className="card-heading"><Users size={22} color="var(--primary)" /> Topic Communities</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-          Explore and connect in dedicated topic communities.
+      <div className="card">
+        <div className="card-title">
+          <Users size={18} color="var(--primary)" />
+          <span>Topic Communities</span>
+        </div>
+        <p className="card-subtext">
+          Join topic hubs to steer and discover conversations in your areas of interest.
         </p>
       </div>
 
-      <div className="communities-collection">
+      <div className="communities-grid">
         {communities.map(c => (
-          <div key={c.id} className="community-panel" onClick={() => handleSelect(c)} style={{ cursor: 'pointer' }}>
-            <div className="community-banner-strip" style={{ background: c.banner_gradient }}>
-              {c.icon}
-            </div>
-            <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-              <div style={{ fontFamily: 'var(--font-heading)', fontSize: 17, fontWeight: 700 }}>{c.name}</div>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, flex: 1 }}>{c.description}</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>👥 {c.members_count} members</span>
-                <button
-                  className={c.is_member ? 'btn-secondary' : 'btn-primary'}
-                  style={{ padding: '5px 12px', fontSize: 12 }}
-                  onClick={(e) => handleToggle(e, c.id)}
-                >
-                  {c.is_member ? 'Joined' : '+ Join'}
-                </button>
+          <div
+            key={c.id}
+            className="community-card"
+            onClick={() => handleSelect(c)}
+            style={{ cursor: 'pointer' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 28 }}>{c.icon}</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>{c.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{c.members_count} members</div>
               </div>
+            </div>
+
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.4, flex: 1 }}>
+              {c.description}
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+              <button
+                className={c.is_member ? 'btn-secondary' : 'btn-primary'}
+                style={{ padding: '4px 12px', fontSize: 12 }}
+                onClick={(e) => handleToggle(e, c.id)}
+              >
+                {c.is_member ? 'Joined' : 'Join'}
+              </button>
             </div>
           </div>
         ))}
@@ -113,4 +138,3 @@ export function CommunitiesPage({ user, onOpenShare, onOpenDetail, onExplain }) 
     </div>
   );
 }
-

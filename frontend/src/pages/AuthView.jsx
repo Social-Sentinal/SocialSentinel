@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { api } from '../services/api';
-import MediaImage from '../components/MediaImage';
 import { Sparkles } from 'lucide-react';
 
 export function AuthView({ onLogin }) {
@@ -9,7 +8,7 @@ export function AuthView({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -37,66 +36,96 @@ export function AuthView({ onLogin }) {
   };
 
   return (
-    <div className="auth-stage">
-      <div className="auth-panel-card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
-          <img src="/logo.png" alt="SocialSentinel Logo" className="brand-logo-img" style={{ width: 46, height: 46 }} />
-          <div className="brand-name" style={{ fontSize: 26 }}>SocialSentinel</div>
+    <div className="auth-container">
+      <div className="auth-card">
+        {/* Brand header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
+          <img src="/logo.png" alt="SocialSentinel" style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)' }} />
+          <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.3px' }}>SocialSentinel</span>
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 700 }}>
+          <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>
             {mode === 'login' ? 'Welcome Back' : 'Create an Account'}
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
-            Connect, discover, and share across intelligent topic communities.
+            Intelligent, sentiment-aware social intelligence network.
           </p>
         </div>
 
         {error && (
-          <div style={{ color: 'var(--status-negative)', background: 'var(--status-negative-bg)', border: '1px solid var(--status-negative-border)', padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
+          <div style={{
+            color: 'var(--status-negative)',
+            background: 'var(--status-negative-bg)',
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: 12.5,
+            fontWeight: 500
+          }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {mode === 'register' && (
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Username</label>
+              <input
+                required
+                className="input-field"
+                placeholder="e.g. alex_dev"
+                value={form.username}
+                onChange={e => setForm({ ...form, username: e.target.value })}
+                style={{ marginTop: 3 }}
+              />
+            </div>
+          )}
+
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>
+              {mode === 'login' ? 'Email or Username' : 'Email Address'}
+            </label>
             <input
               required
-              placeholder="Username"
-              value={form.username}
-              onChange={e => setForm({ ...form, username: e.target.value })}
-              style={{ padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
+              className="input-field"
+              placeholder={mode === 'login' ? 'alex@example.com' : 'alex@example.com'}
+              value={form.email}
+              onChange={e => setForm({ ...form, email: e.target.value })}
+              style={{ marginTop: 3 }}
             />
-          )}
-
-          <input
-            required
-            placeholder={mode === 'login' ? 'Email or Username' : 'Email Address'}
-            value={form.email}
-            onChange={e => setForm({ ...form, email: e.target.value })}
-            style={{ padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
-          />
+          </div>
 
           {mode === 'register' && (
-            <input
-              placeholder="Display Name"
-              value={form.display_name}
-              onChange={e => setForm({ ...form, display_name: e.target.value })}
-              style={{ padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
-            />
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Display Name</label>
+              <input
+                className="input-field"
+                placeholder="Alex Mercer"
+                value={form.display_name}
+                onChange={e => setForm({ ...form, display_name: e.target.value })}
+                style={{ marginTop: 3 }}
+              />
+            </div>
           )}
 
-          <input
-            type="password"
-            required
-            placeholder="Password"
-            value={form.password}
-            onChange={e => setForm({ ...form, password: e.target.value })}
-            style={{ padding: '11px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-elevated)', outline: 'none' }}
-          />
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Password</label>
+            <input
+              type="password"
+              required
+              className="input-field"
+              placeholder="••••••••"
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
+              style={{ marginTop: 3 }}
+            />
+          </div>
 
-          <button className="btn-primary" style={{ justifyContent: 'center', padding: 12, marginTop: 4, width: '100%' }} disabled={loading}>
+          <button
+            className="btn-primary"
+            style={{ width: '100%', padding: '10px 16px', marginTop: 6 }}
+            disabled={loading}
+          >
             {loading ? 'Authenticating…' : mode === 'login' ? 'Sign In' : 'Sign Up'}
           </button>
         </form>
@@ -107,20 +136,28 @@ export function AuthView({ onLogin }) {
               setError('');
               setMode(mode === 'login' ? 'register' : 'login');
             }}
-            style={{ color: 'var(--primary)', fontWeight: 600, fontSize: 13 }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--primary)',
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: 'pointer'
+            }}
           >
-            {mode === 'login' ? "Don't have an account? Register" : 'Already have an account? Sign in'}
+            {mode === 'login' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
           </button>
         </div>
 
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
           <button
             onClick={handleDemo}
             className="btn-secondary"
-            style={{ justifyContent: 'center', padding: 11, fontWeight: 700, width: '100%', borderColor: 'var(--border)' }}
+            style={{ width: '100%', padding: '9px 14px', fontSize: 13 }}
             disabled={loading}
           >
-            <Sparkles size={16} color="var(--primary)" /> Try Demo Account (Sentinel Explorer)
+            <Sparkles size={14} color="var(--primary)" />
+            <span>Try Demo Account</span>
           </button>
         </div>
       </div>

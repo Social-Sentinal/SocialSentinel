@@ -59,7 +59,7 @@ async function request(path, opt = {}) {
   try {
     data = await r.json();
   } catch (e) {
-    // empty or non-JSON body
+    // empty body
   }
 
   if (!r.ok) {
@@ -97,7 +97,10 @@ export const api = {
   getUser: (username) => request(`/users/${encodeURIComponent(username)}`),
   updateUser: (body) => request('/users/me', { method: 'PUT', body: JSON.stringify(body) }),
   prefs: (body) => request('/users/preferences', { method: 'PUT', body: JSON.stringify(body) }),
+  getTopicPreferences: () => request('/users/topic-preferences'),
+  resetTopicPreferences: () => request('/users/topic-preferences/reset', { method: 'POST' }),
   follow: (userId) => request(`/users/${userId}/follow`, { method: 'POST' }),
+  block: (userId) => request(`/users/${userId}/block`, { method: 'POST' }),
 
   // Posts & Feed
   posts: (params = '') => request('/posts' + formatQuery(params)),
@@ -106,12 +109,18 @@ export const api = {
   post: (body) => request('/posts', { method: 'POST', body: JSON.stringify(body) }),
   deletePost: (id) => request(`/posts/${id}`, { method: 'DELETE' }),
   action: (id, act) => request(`/posts/${id}/${act}`, { method: 'POST' }),
+  report: (id, reason, details = '') => request(`/posts/${id}/report`, { method: 'POST', body: JSON.stringify({ reason, details }) }),
   comments: (id) => request(`/posts/${id}/comments`),
-  comment: (id, text) => request(`/posts/${id}/comments`, { method: 'POST', body: JSON.stringify({ text }) }),
+  comment: (id, text, parentId = null) =>
+    request(`/posts/${id}/comments`, { method: 'POST', body: JSON.stringify({ text, parent_id: parentId }) }),
   event: (body) => request('/events', { method: 'POST', body: JSON.stringify(body) }),
 
-  // Search & Communities
+  // Recommendations & Explainability
+  explain: (postId) => request(`/recommendations/explain/${postId}`),
+
+  // Search & Trending
   search: (q) => request('/search?q=' + encodeURIComponent(q)),
+  trending: () => request('/search/trending'),
   communities: () => request('/communities'),
   joinCommunity: (id) => request(`/communities/${id}/join`, { method: 'POST' }),
   communityPosts: (slug, params = '') => request(`/communities/${slug}/posts` + formatQuery(params)),
@@ -124,8 +133,8 @@ export const api = {
   // AI & Sentiment
   predictSentiment: (text) => request('/sentiment/predict', { method: 'POST', body: JSON.stringify({ text }) }),
   predictEmotion: (text) => request('/sentiment/emotion', { method: 'POST', body: JSON.stringify({ text }) }),
+  sentimentHistory: () => request('/sentiment/history'),
   ask: (prompt) => request('/ai/ask', { method: 'POST', body: JSON.stringify({ prompt }) }),
-  explain: (postId) => request(`/ai/explain/${postId}`),
   models: () => request('/models'),
 
   // Direct Messaging
@@ -138,21 +147,3 @@ export const api = {
       body: JSON.stringify({ body, shared_post_id: sharedPostId })
     })
 };
-
-// Named helper functions for components
-export const fetchPosts = (page = 1, limit = 20, q = '', topic = '', sentiment = '') => {
-  return api.posts({ page, limit, q, topic, sentiment });
-};
-
-export const fetchFeedRecommendations = (query = '', limit = 20) => {
-  return api.feed({ limit, query });
-};
-
-export const fetchAnalyticsOverview = () => api.analytics();
-export const createNewPost = (postData) => api.post(postData);
-export const predictSentimentText = (text) => api.predictSentiment(text);
-export const fetchEmotionDetection = (text) => api.predictEmotion(text);
-export const toggleLikePost = (postId) => api.action(postId, 'like');
-export const addCommentToPost = (postId, comment) => api.comment(postId, comment.text || comment);
-export const logUserInteraction = (data) => api.event(data);
-export const fetchUserProfile = (username) => api.getUser(username);

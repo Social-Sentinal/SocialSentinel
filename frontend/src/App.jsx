@@ -1,35 +1,38 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Home,
   Compass,
   MessageSquare,
   Users,
   Brain,
-  BarChart3,
+  BarChart2,
   User,
   Plus,
   LogOut,
-  Search,
   Sun,
   Moon,
   Sparkles,
-  X
+  X,
+  Zap,
+  Clock,
+  HeartHandshake,
+  Activity,
+  LogIn
 } from 'lucide-react';
 import { api } from './services/api';
 import MediaImage from './components/MediaImage';
 
-const NAV_TABS = [
-  { id: 'feed', label: 'Home Feed', icon: Home },
+const NAV_ITEMS = [
+  { id: 'feed', label: 'Feed', icon: Home },
   { id: 'explore', label: 'Explore', icon: Compass },
   { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'communities', label: 'Communities', icon: Users },
   { id: 'ai-studio', label: 'AI Studio', icon: Brain },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { id: 'analytics', label: 'Insights', icon: BarChart2 },
   { id: 'profile', label: 'Profile', icon: User }
 ];
 
 import { FeedStream, QuickComposer } from './pages/FeedStream';
-import { PostCardItem } from './components/PostCardItem';
 import { RightSidebarRail } from './components/RightSidebarRail';
 import { MessengerView } from './pages/MessengerView';
 import { ExploreStream } from './pages/ExploreStream';
@@ -50,30 +53,44 @@ export const TOPICS = [
 ];
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  // Always initialize with active explorer state so main page renders instantly
+  const [user, setUser] = useState({
+    id: 1,
+    username: 'demo',
+    display_name: 'Sentinel Explorer',
+    avatar_url: ''
+  });
   const [activeTab, setActiveTab] = useState('feed');
   const [theme, setTheme] = useState(localStorage.getItem('sentinel_theme') || 'dark');
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Global modals
+  // Modals state
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [sharePost, setSharePost] = useState(null);
   const [detailPost, setDetailPost] = useState(null);
-  const [explainModalData, setExplainModalData] = useState(null);
+  const [explainData, setExplainData] = useState(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  // Feed trigger
+  // Feed refresh trigger
   const [feedTrigger, setFeedTrigger] = useState(0);
   const refreshFeed = () => setFeedTrigger(t => t + 1);
 
-  // Load user
+  // Authenticate silently or restore session
   useEffect(() => {
     if (api.token) {
       api.me()
         .then(res => setUser(res.user))
         .catch(() => {
-          api.logout();
-          setUser(null);
+          // Token expired or invalid, re-init demo session
+          api.demoLogin()
+            .then(res => setUser(res.user))
+            .catch(() => {});
         });
+    } else {
+      // Auto-connect guest to demo explorer session for instant interactive capabilities
+      api.demoLogin()
+        .then(res => setUser(res.user))
+        .catch(() => {});
     }
   }, []);
 
@@ -83,104 +100,110 @@ export default function App() {
     localStorage.setItem('sentinel_theme', theme);
   }, [theme]);
 
+  // Check unread messages
+  useEffect(() => {
+    if (!user) return;
+    const checkUnread = async () => {
+      try {
+        const res = await api.conversations();
+        const unread = (res.data || []).reduce((acc, conv) => acc + (conv.unread_count || 0), 0);
+        setUnreadCount(unread);
+      } catch (err) {}
+    };
+    checkUnread();
+    const timer = setInterval(checkUnread, 15000);
+    return () => clearInterval(timer);
+  }, [user]);
+
   const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
 
-  if (!user) {
-    return <AuthView onLogin={setUser} />;
-  }
+  const handleLogout = () => {
+    api.logout();
+    api.demoLogin().then(res => setUser(res.user)).catch(() => {
+      setUser({ id: 1, username: 'demo', display_name: 'Sentinel Explorer', avatar_url: '' });
+    });
+  };
 
   return (
-    <div className="app-container">
-      {/* Left Sidebar Rail */}
-      <aside className="app-sidebar">
-        <div className="brand-section" onClick={() => setActiveTab('feed')}>
-          <img src="/logo.png" alt="SocialSentinel Logo" className="brand-logo-img" />
-          <div className="brand-text-block">
-            <div className="brand-name">SocialSentinel</div>
-            <span className="brand-sub">Social Network</span>
+    <div className="app-shell">
+      {/* Clean Sticky Top Navbar */}
+      <header className="app-navbar">
+        <div className="navbar-inner">
+          {/* Brand Logo & Name */}
+          <div className="brand-link" onClick={() => setActiveTab('feed')}>
+            <img src="/logo.png" alt="SocialSentinel" className="brand-icon-img" />
+            <span className="brand-title">SocialSentinel</span>
           </div>
-        </div>
 
-        <button className="sidebar-action-btn" onClick={() => setCreateModalOpen(true)}>
-          <Plus size={18} /> Create Post
-        </button>
+          {/* Desktop & Laptop Navigation Tabs */}
+          <nav className="navbar-nav">
+            {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                className={`nav-link-btn ${activeTab === id ? 'active' : ''}`}
+                onClick={() => setActiveTab(id)}
+              >
+                <Icon size={16} />
+                <span>{label}</span>
+                {id === 'messages' && unreadCount > 0 && (
+                  <span className="nav-badge">{unreadCount}</span>
+                )}
+              </button>
+            ))}
+          </nav>
 
-        <nav className="sidebar-nav">
-          {NAV_TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              className={`sidebar-nav-item ${activeTab === id ? 'active' : ''}`}
-              onClick={() => setActiveTab(id)}
-            >
-              <Icon size={18} />
-              <span>{label}</span>
-              {id === 'messages' && unreadCount > 0 && (
-                <span style={{ marginLeft: 'auto', background: 'var(--primary)', color: 'white', padding: '2px 7px', borderRadius: 99, fontSize: 11, fontWeight: 700 }}>
-                  {unreadCount}
-                </span>
-              )}
+          {/* Right Action Cluster */}
+          <div className="navbar-actions">
+            <button className="btn-new-post" onClick={() => setCreateModalOpen(true)}>
+              <Plus size={15} />
+              <span>Post</span>
             </button>
-          ))}
-        </nav>
 
-        <div className="sidebar-user-footer">
-          <button className="theme-button" onClick={toggleTheme}>
-            <span>Theme Mode</span>
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-
-          <div className="user-profile-summary" onClick={() => setActiveTab('profile')}>
-            <MediaImage
-              src={user.avatar_url}
-              fallbackText={user.display_name}
-              isAvatar
-              className="user-summary-avatar"
-            />
-            <div className="user-summary-text">
-              <div className="user-summary-name">{user.display_name}</div>
-              <div className="user-summary-handle">@{user.username}</div>
-            </div>
-            <button
-              title="Log out"
-              onClick={(e) => {
-                e.stopPropagation();
-                api.logout();
-                setUser(null);
-              }}
-              style={{ color: 'var(--text-muted)' }}
-            >
-              <LogOut size={16} />
+            <button className="theme-toggle-btn" onClick={toggleTheme} title="Toggle theme">
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-          </div>
-        </div>
-      </aside>
 
-      {/* Main Viewport */}
-      <div className="app-viewport">
-        <header className="viewport-header">
-          <div className="header-left-group">
-            <img src="/logo.png" alt="Logo" className="brand-logo-img mobile-header-brand" onClick={() => setActiveTab('feed')} style={{ cursor: 'pointer' }} />
-            <div className="header-title-text">
-              {NAV_TABS.find(t => t.id === activeTab)?.label || 'SocialSentinel'}
+            {user.username === 'demo' ? (
+              <button
+                className="btn-secondary"
+                onClick={() => setAuthModalOpen(true)}
+                style={{ padding: '6px 12px', fontSize: 12.5 }}
+                title="Sign in with an existing account or register"
+              >
+                <LogIn size={13} />
+                <span>Sign In</span>
+              </button>
+            ) : null}
+
+            <div className="user-profile-chip" onClick={() => setActiveTab('profile')} title={`Profile: @${user.username}`}>
+              <MediaImage
+                src={user.avatar_url}
+                fallbackText={user.display_name}
+                isAvatar
+                className="user-chip-avatar"
+              />
+              <span className="user-chip-name">{user.display_name}</span>
+              <button
+                className="logout-icon-btn"
+                title="Switch account / Sign in"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLogout();
+                  setAuthModalOpen(true);
+                }}
+              >
+                <LogOut size={13} />
+              </button>
             </div>
           </div>
+        </div>
+      </header>
 
-          <div className="header-search-container">
-            <Search size={15} className="header-search-icon" />
-            <input
-              className="header-search-field"
-              placeholder="Search posts, topics, creators…"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') setActiveTab('explore');
-              }}
-            />
-          </div>
-        </header>
-
-        {/* Content Views */}
+      {/* Main Content Area */}
+      <main className="app-container">
         {activeTab === 'feed' && (
-          <div className="page-layout-split">
-            <div className="main-column">
+          <div className="layout-grid">
+            <div className="feed-column">
               <QuickComposer user={user} onPosted={refreshFeed} />
               <FeedStream
                 user={user}
@@ -188,32 +211,36 @@ export default function App() {
                 refreshFeed={refreshFeed}
                 onOpenShare={setSharePost}
                 onOpenDetail={setDetailPost}
-                onExplain={setExplainModalData}
+                onExplain={setExplainData}
               />
             </div>
-            <RightSidebarRail
-              user={user}
-              onTopicClick={() => setActiveTab('feed')}
-              onRefreshFeed={refreshFeed}
-            />
+            <div className="rail-column">
+              <RightSidebarRail
+                user={user}
+                onTopicClick={() => setActiveTab('feed')}
+                onRefreshFeed={refreshFeed}
+              />
+            </div>
           </div>
         )}
 
         {activeTab === 'explore' && (
-          <div className="page-layout-split">
-            <div className="main-column">
+          <div className="layout-grid">
+            <div className="feed-column">
               <ExploreStream
                 user={user}
                 onOpenShare={setSharePost}
                 onOpenDetail={setDetailPost}
-                onExplain={setExplainModalData}
+                onExplain={setExplainData}
               />
             </div>
-            <RightSidebarRail
-              user={user}
-              onTopicClick={() => setActiveTab('feed')}
-              onRefreshFeed={refreshFeed}
-            />
+            <div className="rail-column">
+              <RightSidebarRail
+                user={user}
+                onTopicClick={() => setActiveTab('feed')}
+                onRefreshFeed={refreshFeed}
+              />
+            </div>
           </div>
         )}
 
@@ -226,49 +253,72 @@ export default function App() {
         )}
 
         {activeTab === 'communities' && (
-          <CommunitiesPage
-            user={user}
-            onSelectTopic={() => setActiveTab('feed')}
-          />
+          <div className="fullwidth-page">
+            <CommunitiesPage
+              user={user}
+              onOpenShare={setSharePost}
+              onOpenDetail={setDetailPost}
+              onExplain={setExplainData}
+            />
+          </div>
         )}
 
-        {activeTab === 'ai-studio' && <AIStudioPage user={user} />}
+        {activeTab === 'ai-studio' && (
+          <div className="fullwidth-page">
+            <AIStudioPage user={user} />
+          </div>
+        )}
 
-        {activeTab === 'analytics' && <AnalyticsPage user={user} />}
+        {activeTab === 'analytics' && (
+          <div className="fullwidth-page">
+            <AnalyticsPage user={user} />
+          </div>
+        )}
 
         {activeTab === 'profile' && (
-          <div className="page-layout-split">
-            <div className="main-column">
+          <div className="layout-grid">
+            <div className="feed-column">
               <ProfileStream
                 user={user}
                 setUser={setUser}
                 onOpenShare={setSharePost}
                 onOpenDetail={setDetailPost}
-                onExplain={setExplainModalData}
+                onExplain={setExplainData}
               />
             </div>
-            <RightSidebarRail
-              user={user}
-              onTopicClick={() => setActiveTab('feed')}
-              onRefreshFeed={refreshFeed}
-            />
+            <div className="rail-column">
+              <RightSidebarRail
+                user={user}
+                onTopicClick={() => setActiveTab('feed')}
+                onRefreshFeed={refreshFeed}
+              />
+            </div>
           </div>
         )}
-      </div>
+      </main>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="mobile-bottom-bar">
-        {NAV_TABS.slice(0, 5).map(({ id, label, icon: Icon }) => (
+      {/* Mobile Bottom Navigation Bar (Phones & Small Tablets) */}
+      <nav className="bottom-nav-bar">
+        {[
+          { id: 'feed', label: 'Feed', icon: Home },
+          { id: 'explore', label: 'Explore', icon: Compass },
+          { id: 'messages', label: 'Messages', icon: MessageSquare },
+          { id: 'communities', label: 'Hubs', icon: Users },
+          { id: 'profile', label: 'Profile', icon: User }
+        ].map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            className={`mobile-nav-item ${activeTab === id ? 'active' : ''}`}
+            className={`bottom-nav-btn ${activeTab === id ? 'active' : ''}`}
             onClick={() => setActiveTab(id)}
           >
             <Icon size={18} />
             <span>{label}</span>
+            {id === 'messages' && unreadCount > 0 && (
+              <span className="bottom-badge">{unreadCount}</span>
+            )}
           </button>
         ))}
-      </div>
+      </nav>
 
       {/* Modals */}
       {createModalOpen && (
@@ -307,27 +357,116 @@ export default function App() {
         />
       )}
 
-      {explainModalData && (
-        <div className="modal-overlay" onClick={() => setExplainModalData(null)}>
-          <div className="modal-content-box" onClick={e => e.stopPropagation()}>
-            <div className="modal-header-bar">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 16 }}>
-                <Sparkles size={18} color="var(--primary)" /> Why Was This Recommended?
-              </div>
-              <button onClick={() => setExplainModalData(null)} style={{ color: 'var(--text-muted)' }}>
+      {/* Auth Modal (Login / Register without leaving the main page) */}
+      {authModalOpen && (
+        <div className="modal-overlay" onClick={() => setAuthModalOpen(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="modal-header">
+              <div className="modal-title">Sign In or Register</div>
+              <button
+                onClick={() => setAuthModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
                 <X size={18} />
               </button>
             </div>
-            <div className="modal-body-content">
-              <div style={{ background: 'var(--bg-elevated)', padding: 16, borderRadius: 'var(--radius-md)', fontSize: 14, lineHeight: 1.6, border: '1px solid var(--border)' }}>
-                {explainModalData.response}
+            <AuthView onLogin={(newUser) => {
+              setUser(newUser);
+              setAuthModalOpen(false);
+              refreshFeed();
+            }} />
+          </div>
+        </div>
+      )}
+
+      {/* Recommendation Explainability Modal */}
+      {explainData && (
+        <div className="modal-overlay" onClick={() => setExplainData(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">
+                <Sparkles size={18} color="var(--primary)" />
+                <span>Why Was This Recommended?</span>
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                Personalized based on topics and creators you follow.
-              </div>
-              <button className="btn-primary" style={{ alignSelf: 'flex-end' }} onClick={() => setExplainModalData(null)}>
-                Understood
+              <button
+                onClick={() => setExplainData(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
+                <X size={18} />
               </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{
+                background: 'var(--bg-elevated)',
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Match Score
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)', marginTop: 2 }}>
+                    {explainData.match_percentage ?? Math.round((explainData.final_score || 0.75) * 100)}% Match
+                  </div>
+                </div>
+                <div style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'var(--primary)',
+                  background: 'var(--primary-subtle)',
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-full)'
+                }}>
+                  #{explainData.topic || 'AI & Tech'}
+                </div>
+              </div>
+
+              <div style={{
+                background: 'var(--bg-elevated)',
+                padding: 12,
+                borderRadius: 'var(--radius-sm)',
+                fontSize: 13.5,
+                lineHeight: 1.5,
+                color: 'var(--text-primary)'
+              }}>
+                {explainData.rationale || explainData.response || 'Recommended based on your content preferences, sentiment signals, and creator graph.'}
+              </div>
+
+              {explainData.breakdown && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Scoring Breakdown
+                  </div>
+
+                  {[
+                    { label: 'Content Semantic Similarity (35%)', val: explainData.breakdown.content_semantic_score, icon: Zap },
+                    { label: 'Collaborative Peer Filtering (25%)', val: explainData.breakdown.collaborative_peer_score, icon: HeartHandshake },
+                    { label: 'Sentiment Topic Affinity (20%)', val: explainData.breakdown.sentiment_affinity_score, icon: Activity },
+                    { label: 'Community Velocity (10%)', val: explainData.breakdown.community_velocity_score, icon: Sparkles },
+                    { label: 'Freshness / Recency (10%)', val: explainData.breakdown.freshness_score, icon: Clock }
+                  ].map(factor => (
+                    <div key={factor.label} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>{factor.label}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{Math.round((factor.val || 0) * 100)}%</span>
+                      </div>
+                      <div style={{ height: 5, background: 'var(--bg-elevated)', borderRadius: 99, overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.round((factor.val || 0) * 100)}%`, height: '100%', background: 'var(--primary)', borderRadius: 99 }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+                <button className="btn-primary" onClick={() => setExplainData(null)}>
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -335,6 +474,3 @@ export default function App() {
     </div>
   );
 }
-
-
-

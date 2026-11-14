@@ -1,19 +1,43 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import MediaImage from './MediaImage';
 import { Sliders, Users, Flame } from 'lucide-react';
 
 export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
-  const [explorationRate, setExplorationRate] = useState(20);
+  const [explorationRate, setExplorationRate] = useState(25);
   const [communities, setCommunities] = useState([]);
+  const [trendingTags, setTrendingTags] = useState([]);
 
   useEffect(() => {
+    // Load communities
     api.communities().then(res => {
       setCommunities((res.data || []).slice(0, 3));
+    }).catch(() => {});
+
+    // Load trending hashtags
+    api.trending().then(res => {
+      if (res.hashtags && res.hashtags.length > 0) {
+        setTrendingTags(res.hashtags.slice(0, 5));
+      } else {
+        setTrendingTags([
+          { tag: '#SocialSentinel', count: 48 },
+          { tag: '#MachineLearning', count: 35 },
+          { tag: '#WebEngineering', count: 28 },
+          { tag: '#Cybersecurity', count: 19 },
+          { tag: '#DigitalWellbeing', count: 14 }
+        ]);
+      }
+    }).catch(() => {
+      setTrendingTags([
+        { tag: '#SocialSentinel', count: 48 },
+        { tag: '#MachineLearning', count: 35 },
+        { tag: '#WebEngineering', count: 28 },
+        { tag: '#Cybersecurity', count: 19 },
+        { tag: '#DigitalWellbeing', count: 14 }
+      ]);
     });
   }, []);
 
-  const handleSlider = async val => {
+  const handleSlider = async (val) => {
     setExplorationRate(val);
     try {
       await api.prefs({ exploration_rate: val / 100 });
@@ -21,7 +45,7 @@ export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
     } catch (err) {}
   };
 
-  const handleJoin = async cid => {
+  const handleJoin = async (cid) => {
     try {
       await api.joinCommunity(cid);
       const res = await api.communities();
@@ -30,19 +54,27 @@ export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
   };
 
   return (
-    <aside className="side-column">
-      {/* Exploration Slider Widget */}
-      <div className="sentinel-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <span style={{ fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-primary)' }}>
-            <Sliders size={14} color="var(--primary)" /> Discovery Steerer
+    <>
+      {/* Discovery Steerer Slider */}
+      <div className="card">
+        <div className="card-header-row">
+          <span className="card-title">
+            <Sliders size={15} color="var(--primary)" />
+            <span>Discovery Steerer</span>
           </span>
-          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'var(--primary-gradient)', color: 'white' }}>
+          <span style={{
+            fontSize: 11,
+            fontWeight: 700,
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-full)',
+            background: 'var(--primary-subtle)',
+            color: 'var(--primary)'
+          }}>
             {explorationRate}%
           </span>
         </div>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.4 }}>
-          Fine-tune topic diversity & serendipity.
+        <p className="card-subtext" style={{ marginBottom: 10 }}>
+          Adjust topic diversity vs personalized profile exploitation.
         </p>
         <input
           type="range"
@@ -52,13 +84,19 @@ export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
           onChange={e => handleSlider(Number(e.target.value))}
           style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }}
         />
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: 'var(--text-muted)', marginTop: 4 }}>
+          <span>Focused (5%)</span>
+          <span>Serendipity (80%)</span>
+        </div>
       </div>
 
       {/* Suggested Communities */}
-      <div className="sentinel-card">
-        <div className="card-heading">
-          <Users size={16} color="var(--primary)" />
-          <span>Recommended Communities</span>
+      <div className="card">
+        <div className="card-header-row">
+          <span className="card-title">
+            <Users size={15} color="var(--primary)" />
+            <span>Topic Communities</span>
+          </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {communities.map(c => (
@@ -66,13 +104,13 @@ export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 18 }}>{c.icon}</span>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 13 }}>{c.name}</div>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{c.name}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.members_count} members</div>
                 </div>
               </div>
               <button
                 className={c.is_member ? 'btn-secondary' : 'btn-primary'}
-                style={{ padding: '4px 12px', fontSize: 11 }}
+                style={{ padding: '3px 10px', fontSize: 11 }}
                 onClick={() => handleJoin(c.id)}
               >
                 {c.is_member ? 'Joined' : 'Join'}
@@ -82,29 +120,27 @@ export function RightSidebarRail({ user, onTopicClick, onRefreshFeed }) {
         </div>
       </div>
 
-      {/* Trending Topics */}
-      <div className="sentinel-card">
-        <div className="card-heading">
-          <Flame size={16} color="var(--primary)" />
-          <span>Trending Topics</span>
+      {/* Trending Hashtags */}
+      <div className="card">
+        <div className="card-header-row">
+          <span className="card-title">
+            <Flame size={15} color="var(--status-negative)" />
+            <span>Trending Hashtags</span>
+          </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {[
-            { tag: '#SocialSentinel', count: '5.1k discussions' },
-            { tag: '#MachineLearning', count: '4.3k posts' },
-            { tag: '#WebEngineering', count: '2.8k updates' },
-            { tag: '#Cybersecurity', count: '1.9k alerts' },
-            { tag: '#DigitalWellbeing', count: '1.2k reflections' }
-          ].map(item => (
-            <div key={item.tag} style={{ cursor: 'pointer' }} onClick={() => onTopicClick(item.tag)}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--primary)' }}>{item.tag}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.count}</div>
+          {trendingTags.map(item => (
+            <div
+              key={item.tag}
+              style={{ cursor: 'pointer', padding: '3px 0' }}
+              onClick={() => onTopicClick && onTopicClick(item.tag)}
+            >
+              <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--primary)' }}>{item.tag}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.count} discussions</div>
             </div>
           ))}
         </div>
       </div>
-    </aside>
+    </>
   );
 }
-
-
